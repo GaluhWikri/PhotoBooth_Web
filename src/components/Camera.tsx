@@ -89,15 +89,15 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6">
+    <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/50 p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-900 to-indigo-800 bg-clip-text text-transparent flex items-center gap-2">
           <Camera className="w-5 h-5" />
           Kamera
         </h3>
         <button
           onClick={onClose}
-          className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-200 rounded-lg transition-all"
         >
           <X className="w-5 h-5" />
         </button>
@@ -109,7 +109,7 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
           autoPlay
           playsInline
           muted
-          className="w-full h-64 bg-black rounded-xl object-cover"
+          className="w-full h-64 bg-gradient-to-br from-gray-900 to-black rounded-xl object-cover shadow-inner"
           style={{ transform: 'scaleX(-1)' }}
         />
         
@@ -119,12 +119,12 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
         
         {/* Countdown Overlay */}
         {countdown !== null && (
-          <div className="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-blue-900/40 to-indigo-900/60 rounded-xl flex items-center justify-center backdrop-blur-sm">
             <div className="text-center">
-              <div className="text-6xl font-bold text-white mb-2 animate-pulse">
+              <div className="text-6xl font-bold bg-gradient-to-r from-white via-blue-200 to-indigo-200 bg-clip-text text-transparent mb-2 animate-pulse drop-shadow-lg">
                 {countdown}
               </div>
-              <p className="text-white text-lg">Bersiap-siap...</p>
+              <p className="text-white text-lg drop-shadow-md">Bersiap-siap...</p>
             </div>
           </div>
         )}
@@ -133,7 +133,7 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
           <button
             onClick={startCountdown}
             disabled={isCountingDown}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:opacity-50 text-white px-6 py-3 rounded-full font-semibold transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 shadow-lg disabled:cursor-not-allowed"
+            className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 disabled:from-gray-400 disabled:to-gray-500 disabled:opacity-50 text-white px-6 py-3 rounded-full font-semibold transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 shadow-xl disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             <Zap className="w-5 h-5" />
             Ambil Foto
@@ -144,8 +144,8 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
       <canvas ref={canvasRef} className="hidden" />
       
       {/* Timer Info */}
-      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-        <p className="text-blue-800 text-sm text-center">
+      <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+        <p className="text-blue-800 text-sm text-center font-medium">
           💡 Klik "Ambil Foto" untuk memulai timer 5 detik
         </p>
       </div>

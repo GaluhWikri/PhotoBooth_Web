@@ -42,16 +42,16 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, backgroundColor }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6">
+    <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/50 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-900 to-indigo-800 bg-clip-text text-transparent flex items-center gap-2">
           <ImageIcon className="w-5 h-5" />
           Photo Strip
         </h3>
         <button
           onClick={downloadPhotoStrip}
           disabled={photos.length === 0}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-semibold transition-all disabled:cursor-not-allowed"
+          className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-2 rounded-lg font-semibold transition-all transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg"
         >
           <Download className="w-4 h-4" />
           Download
@@ -61,33 +61,36 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, backgroundColor }) => {
       {/* Photo Strip */}
       <div 
         ref={stripRef}
-        className="w-full max-w-sm mx-auto rounded-2xl overflow-hidden shadow-xl"
+        className="w-full max-w-sm mx-auto rounded-2xl overflow-hidden shadow-2xl border-2 border-white/30"
         style={{ backgroundColor: backgroundColor }}
       >
+        {/* Gradient overlay for depth */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 pointer-events-none rounded-2xl"></div>
+        
         {/* Header */}
-        <div className="bg-black/20 backdrop-blur-sm p-4 text-center">
-          <h4 className="text-white font-bold text-lg">PhotoBooth Studio</h4>
+        <div className="bg-gradient-to-r from-black/30 via-black/20 to-black/30 backdrop-blur-sm p-4 text-center relative">
+          <h4 className="text-white font-bold text-lg drop-shadow-lg">PhotoBooth Studio</h4>
           <p className="text-white/80 text-sm">
             {new Date().toLocaleDateString('id-ID')}
           </p>
         </div>
 
         {/* Photos */}
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 relative">
           {Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="photo-slot">
               {photos[index] ? (
                 <img
                   src={photos[index].dataUrl}
                   alt={`Photo ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg border-2 border-white/70 shadow-lg"
+                  className="w-full h-32 object-cover rounded-lg border-2 border-white/70 shadow-xl ring-1 ring-white/50"
                   style={{ transform: 'scaleX(-1)' }}
                 />
               ) : (
-                <div className="w-full h-32 bg-white/30 rounded-lg border-2 border-white/50 border-dashed flex items-center justify-center">
+                <div className="w-full h-32 bg-gradient-to-br from-white/20 via-white/30 to-white/10 rounded-lg border-2 border-white/50 border-dashed flex items-center justify-center backdrop-blur-sm">
                   <div className="text-center">
-                    <ImageIcon className="w-8 h-8 text-white/70 mx-auto mb-2" />
-                    <p className="text-white/70 text-sm font-medium">Photo {index + 1}</p>
+                    <ImageIcon className="w-8 h-8 text-white/80 mx-auto mb-2 drop-shadow-sm" />
+                    <p className="text-white/80 text-sm font-medium drop-shadow-sm">Photo {index + 1}</p>
                   </div>
                 </div>
               )}
@@ -96,8 +99,8 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, backgroundColor }) => {
         </div>
 
         {/* Footer */}
-        <div className="bg-black/20 backdrop-blur-sm p-3 text-center">
-          <p className="text-white/80 text-xs">
+        <div className="bg-gradient-to-r from-black/30 via-black/20 to-black/30 backdrop-blur-sm p-3 text-center relative">
+          <p className="text-white/80 text-xs drop-shadow-sm">
             Made with ❤️ by PhotoBooth Studio
           </p>
         </div>
