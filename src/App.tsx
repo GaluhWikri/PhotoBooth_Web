@@ -3,7 +3,7 @@ import PhotoBooth from './components/PhotoBooth';
 
 function App() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-b from-green-100 via-green-200 to-blue-200">
       <PhotoBooth />
     </div>
   );

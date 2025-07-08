@@ -22,25 +22,25 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
   }, []);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
     if (countdown !== null && countdown > 0) {
       timer = setTimeout(() => {
         setCountdown(countdown - 1);
       }, 1000);
     } else if (countdown === 0) {
-      // Take photo when countdown reaches 0
       takePhotoNow();
       setCountdown(null);
       setIsCountingDown(false);
     }
     return () => clearTimeout(timer);
   }, [countdown]);
+
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
-          width: { ideal: 640 },
-          height: { ideal: 480 },
+          // Meminta rasio aspek 4:3 dari kamera jika memungkinkan
+          aspectRatio: 4 / 3,
           facingMode: 'user'
         }
       });
@@ -52,6 +52,16 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
+      // Fallback jika rasio aspek tidak didukung
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setStream(fallbackStream);
+        if (videoRef.current) {
+          videoRef.current.srcObject = fallbackStream;
+        }
+      } catch (fallbackError) {
+        console.error('Error accessing camera on fallback:', fallbackError);
+      }
     }
   };
 
@@ -76,6 +86,7 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
 
     if (!ctx) return;
 
+    // Set ukuran canvas sesuai dengan rasio aspek video
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
@@ -109,7 +120,9 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
           autoPlay
           playsInline
           muted
-          className="w-full h-64 bg-gradient-to-br from-gray-900 to-black rounded-xl object-cover shadow-inner"
+          // --- PERUBAHAN UTAMA DI SINI ---
+          // Mengganti tinggi tetap (h-64) dengan rasio aspek 4:3
+          className="w-full aspect-[4/3] bg-gradient-to-br from-gray-900 to-black rounded-xl object-cover shadow-inner"
           style={{ transform: 'scaleX(-1)' }}
         />
         
@@ -117,7 +130,6 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
           <div className="absolute inset-0 bg-white rounded-xl opacity-70 pointer-events-none" />
         )}
         
-        {/* Countdown Overlay */}
         {countdown !== null && (
           <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-blue-900/40 to-indigo-900/60 rounded-xl flex items-center justify-center backdrop-blur-sm">
             <div className="text-center">
@@ -143,7 +155,6 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
 
       <canvas ref={canvasRef} className="hidden" />
       
-      {/* Timer Info */}
       <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
         <p className="text-blue-800 text-sm text-center font-medium">
           💡 Klik "Ambil Foto" untuk memulai timer 5 detik
