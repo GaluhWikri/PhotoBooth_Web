@@ -96,7 +96,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
         </div>
 
         <div className="text-center py-16">
-          <p className="font-bold text-2xl text-black tracking-widest">
+          <p className="font-bold text-2xl text-white tracking-widest">
             G.STUDIO
           </p>
         </div>
