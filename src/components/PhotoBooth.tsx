@@ -133,7 +133,7 @@ const PhotoBooth: React.FC = () => {
                 className="w-full cursor-pointer flex items-center justify-center gap-3 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-black text-white px-6 py-3 rounded-xl font-semibold transition-all mb-4"
               >
                 <Upload className="w-5 h-5" />
-                Upload Gambar
+                Upload background
               </label>
 
               <div className="grid grid-cols-3 gap-3">
