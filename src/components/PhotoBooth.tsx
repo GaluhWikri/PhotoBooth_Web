@@ -16,11 +16,14 @@ const PhotoBooth: React.FC = () => {
   const [background, setBackground] = useState<string>('#f5e6e0');
 
   const colors = [
-    { name: 'Beige', value: '#f5e6e0' },
-    { name: 'Navy Blue', value: '#03346E' },
-    { name: 'Ocean Blue', value: '#0369A1' },
+    { name: 'pink', value: '#FCD8CD' },
+    { name: 'Navy Blue', value: '#1E3E62' },
+    { name: 'Blueberry', value: '#52A5CE' },
     { name: 'Purple', value: '#7C3AED' },
-    { name: 'Emerald', value: '#059669' },
+    { name: 'olive green', value: '#AFAB23' },
+    { name: 'Dry earth', value: '#876029' },
+    { name: 'butter yellow', value: '#EFCE7B' },
+    { name: 'BLOOD orangge', value: '#EF6F4C' },
     { name: 'Rose', value: '#E11D48' },
   ];
 
