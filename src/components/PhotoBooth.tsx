@@ -19,7 +19,7 @@ const PhotoBooth: React.FC = () => {
     { name: 'pink', value: '#FCD8CD' },
     { name: 'Navy Blue', value: '#1E3E62' },
     { name: 'Blueberry', value: '#52A5CE' },
-    { name: 'Purple', value: '#7C3AED' },
+    { name: 'FORREST', value: '#2B2B23' },
     { name: 'olive green', value: '#AFAB23' },
     { name: 'Dry earth', value: '#876029' },
     { name: 'butter yellow', value: '#EFCE7B' },
