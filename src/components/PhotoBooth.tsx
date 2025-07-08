@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, RotateCcw, Palette as Palette2, Upload } from 'lucide-react';
+import { Camera, RotateCcw, Palette as Palette2, Upload, Github } from 'lucide-react';
 import CameraComponent from './Camera';
 import PhotoStrip from './PhotoStrip';
 
@@ -74,7 +74,7 @@ const PhotoBooth: React.FC = () => {
             </h1>
           </div>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            
+
           </p>
         </div>
 
@@ -82,7 +82,7 @@ const PhotoBooth: React.FC = () => {
           {/* Left Side - Controls */}
           <div className="space-y-6">
             {showCamera && photos.length < 4 && (
-              <CameraComponent 
+              <CameraComponent
                 onCapture={handlePhotoCapture}
                 onClose={() => setShowCamera(false)}
               />
@@ -132,17 +132,16 @@ const PhotoBooth: React.FC = () => {
                 <Upload className="w-5 h-5" />
                 Upload Gambar
               </label>
-              
+
               <div className="grid grid-cols-3 gap-3">
                 {colors.map((color) => (
                   <button
                     key={color.value}
                     onClick={() => setBackground(color.value)}
-                    className={`w-full h-12 rounded-lg border-2 transition-all ${
-                      background === color.value 
-                        ? 'border-blue-800 scale-105 ring-2 ring-blue-200' 
+                    className={`w-full h-12 rounded-lg border-2 transition-all ${background === color.value
+                        ? 'border-blue-800 scale-105 ring-2 ring-blue-200'
                         : 'border-gray-300 hover:border-gray-400'
-                    }`}
+                      }`}
                     style={{ backgroundColor: color.value }}
                     title={color.name}
                   />
@@ -153,12 +152,29 @@ const PhotoBooth: React.FC = () => {
 
           {/* Right Side - Photo Strip */}
           <div>
-            <PhotoStrip 
+            <PhotoStrip
               photos={photos}
               background={background} // Prop diubah menjadi `background`
             />
           </div>
         </div>
+        <footer className="text-center py-8 mt-8">
+          <div className="flex items-center justify-center gap-4">
+            <p className="text-slate-600 font-semibold">
+              Made with love © 2025 by Galuh Wikri Ramadhan
+            </p>
+            <a
+              href="https://github.com/GaluhWikri/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-500 hover:text-slate-800 transition-colors"
+              aria-label="GitHub Profile"
+            >
+              {/* Hanya sisakan baris ini di dalam tag <a> */}
+              <Github className="w-6 h-6" />
+            </a>
+          </div>
+        </footer>
       </div>
     </div>
   );
