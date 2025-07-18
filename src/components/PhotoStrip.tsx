@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Download, Image as ImageIcon } from 'lucide-react';
 
-// html2canvas TIDAK LAGI DIGUNAKAN.
+// html2canvas dan library sejenis TIDAK LAGI DIGUNAKAN.
 
 interface Photo {
   id: string;
@@ -70,6 +70,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
         const y = (imgRect.top - previewRect.top) / previewRect.height * finalHeight;
         const w = imgRect.width / previewRect.width * finalWidth;
         const h = imgRect.height / previewRect.height * finalHeight;
+        // Mengukur sudut rounded dari CSS dan menskalakannya
         const borderRadius = (parseFloat(getComputedStyle(imgEl).borderRadius) / previewRect.width) * finalWidth;
 
         const photoImg = new Image();
@@ -102,13 +103,15 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
         ctx.restore();
       }
 
-      // LANGKAH 5: GAMBAR ULANG TEKS
+      // LANGKAH 5: GAMBAR ULANG TEKS PERSIS SEPERTI PRATINJAU
       const textRect = textElement.getBoundingClientRect();
       const textStyle = getComputedStyle(textElement);
+      // Hitung posisi tengah teks secara presisi
       const x = (textRect.left - previewRect.left + textRect.width / 2) / previewRect.width * finalWidth;
       const y = (textRect.top - previewRect.top + textRect.height / 2) / previewRect.height * finalHeight;
       
       ctx.fillStyle = textStyle.color;
+      // Ambil dan skalakan ukuran font dari pratinjau
       ctx.font = `${textStyle.fontWeight} ${parseFloat(textStyle.fontSize) / previewRect.width * finalWidth}px ${textStyle.fontFamily.split(',')[0]}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -173,7 +176,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
           ))}
         </div>
         <div className="text-center py-16">
-          {/* Tambahkan ref ke elemen teks ini */}
+          {/* Tambahkan ref ke elemen teks ini agar bisa diukur */}
           <p ref={textRef} className="font-bold text-2xl text-white tracking-widest">
             G.STUDIO
           </p>
