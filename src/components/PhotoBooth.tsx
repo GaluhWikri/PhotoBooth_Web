@@ -18,7 +18,7 @@ const availableStickers = Object.keys(stickerModules)
 const PhotoBooth: React.FC = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [showCamera, setShowCamera] = useState(false);
-  const [background, setBackground] = useState<string>('#f5e6e0');
+  const [background, setBackground] = useState<string>('#948979');
   const [activeStickers, setActiveStickers] = useState<StickerObject[]>([]);
 
   const colors = [
