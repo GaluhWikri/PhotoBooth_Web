@@ -39,7 +39,6 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
-          // Meminta rasio aspek 4:3 dari kamera jika memungkinkan
           aspectRatio: 4 / 3,
           facingMode: 'user'
         }
@@ -52,7 +51,6 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
-      // Fallback jika rasio aspek tidak didukung
       try {
         const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
         setStream(fallbackStream);
@@ -86,7 +84,6 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
 
     if (!ctx) return;
 
-    // Set ukuran canvas sesuai dengan rasio aspek video
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
@@ -120,8 +117,6 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
           autoPlay
           playsInline
           muted
-          // --- PERUBAHAN UTAMA DI SINI ---
-          // Mengganti tinggi tetap (h-64) dengan rasio aspek 4:3
           className="w-full aspect-[4/3] bg-gradient-to-br from-gray-900 to-black rounded-xl object-cover shadow-inner"
           style={{ transform: 'scaleX(-1)' }}
         />
@@ -130,8 +125,10 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
           <div className="absolute inset-0 bg-white rounded-xl opacity-70 pointer-events-none" />
         )}
         
+        {/* --- PERUBAHAN DI SINI --- */}
         {countdown !== null && (
-          <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-blue-900/40 to-indigo-900/60 rounded-xl flex items-center justify-center backdrop-blur-sm">
+          // Menghapus class background dan backdrop-blur
+          <div className="absolute inset-0 rounded-xl flex items-center justify-center pointer-events-none">
             <div className="text-center">
               <div className="text-6xl font-bold bg-gradient-to-r from-white via-blue-200 to-indigo-200 bg-clip-text text-transparent mb-2 animate-pulse drop-shadow-lg">
                 {countdown}
