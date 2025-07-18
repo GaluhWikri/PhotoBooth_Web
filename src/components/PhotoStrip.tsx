@@ -18,7 +18,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
   const stripRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
 
-  // --- FUNGSI UNDUH BARU: DIBANGUN ULANG TOTAL TANPA LIBRARY GAGAL ---
+  // --- FUNGSI UNDUH BARU: MENGUKUR PRATINJAU & MENGGAMBAR ULANG ---
   const downloadPhotoStrip = async () => {
     const previewElement = stripRef.current;
     if (!previewElement || photos.length < 4) {
@@ -29,11 +29,9 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
     document.body.style.cursor = 'wait';
 
     try {
-      // LANGKAH 1: UKUR SEMUANYA DARI PRATINJAU
+      // LANGKAH 1: UKUR SEMUA ELEMEN DARI PRATINJAU SECARA PRESISI
       const previewRect = previewElement.getBoundingClientRect();
       const aspectRatio = previewRect.height / previewRect.width;
-
-      // Kumpulkan semua elemen gambar dari pratinjau
       const imageElements = Array.from(previewElement.querySelectorAll('img'));
       const textElement = textRef.current;
       if (!textElement || imageElements.length < 4) throw new Error("Elemen internal tidak ditemukan.");
@@ -52,7 +50,11 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
       if (background.startsWith('data:image')) {
         const bgImage = new Image();
         bgImage.crossOrigin = 'anonymous';
-        await new Promise<void>((resolve) => { bgImage.onload = () => resolve(); bgImage.src = background; });
+        await new Promise<void>((resolve, reject) => {
+          bgImage.onload = () => resolve();
+          bgImage.onerror = reject;
+          bgImage.src = background;
+        });
         ctx.drawImage(bgImage, 0, 0, finalWidth, finalHeight);
       } else {
         ctx.fillStyle = background;
@@ -72,7 +74,11 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
 
         const photoImg = new Image();
         photoImg.crossOrigin = 'anonymous';
-        await new Promise<void>((resolve) => { photoImg.onload = () => resolve(); photoImg.src = imgEl.src; });
+        await new Promise<void>((resolve, reject) => {
+          photoImg.onload = () => resolve();
+          photoImg.onerror = reject;
+          photoImg.src = imgEl.src;
+        });
         
         // Membuat efek rounded corner secara manual
         ctx.save();
@@ -103,7 +109,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
       const y = (textRect.top - previewRect.top + textRect.height / 2) / previewRect.height * finalHeight;
       
       ctx.fillStyle = textStyle.color;
-      ctx.font = `${textStyle.fontWeight} ${parseFloat(textStyle.fontSize) / previewRect.width * finalWidth}px ${textStyle.fontFamily}`;
+      ctx.font = `${textStyle.fontWeight} ${parseFloat(textStyle.fontSize) / previewRect.width * finalWidth}px ${textStyle.fontFamily.split(',')[0]}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(textElement.innerText, x, y);
