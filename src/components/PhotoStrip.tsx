@@ -20,31 +20,37 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
     const element = stripRef.current;
     if (!element) return;
 
-    // Mengukur tinggi elemen yang sebenarnya di layar
-    const renderedHeight = element.offsetHeight;
-    
+    // Mengukur dimensi elemen yang sebenarnya di layar
+    const rect = element.getBoundingClientRect();
+    const elementWidth = rect.width;
+    const elementHeight = rect.height;
+
     const clone = element.cloneNode(true) as HTMLElement;
-    clone.style.width = '384px';
     
-    // Menggunakan tinggi yang diukur, bukan 'auto'
-    clone.style.height = `${renderedHeight}px`; 
-    
+    // Menerapkan dimensi yang diukur untuk menjaga proporsi
+    clone.style.width = `${elementWidth}px`;
+    clone.style.height = `${elementHeight}px`;
     clone.style.position = 'absolute';
     clone.style.left = '-9999px';
     clone.style.top = '0px';
+    
     document.body.appendChild(clone);
-
-    // Memberi jeda agar klon sempat ter-render
+    
     await new Promise(resolve => setTimeout(resolve, 50));
 
     try {
+      // Memerintahkan html2canvas untuk menggunakan ukuran yang sudah pasti
       const canvas = await html2canvas(clone, {
-        scale: 2,
+        scale: 3, // Skala 3x untuk hasil super tajam
         useCORS: true,
         allowTaint: true,
         logging: false,
         backgroundColor: null,
+        // Perintah paling penting:
+        width: elementWidth,
+        height: elementHeight,
       });
+
       const link = document.createElement('a');
       link.download = `photostrip-gstudio-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
