@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Download, Image as ImageIcon } from 'lucide-react';
-import html2canvas from 'html2canvas';
+
+// html2canvas TIDAK LAGI DIGUNAKAN.
 
 interface Photo {
   id: string;
@@ -10,57 +11,114 @@ interface Photo {
 
 interface PhotoStripProps {
   photos: Photo[];
-  background: string; 
+  background: string;
 }
 
 const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
   const stripRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLParagraphElement>(null);
 
+  // --- FUNGSI UNDUH BARU: DIBANGUN ULANG TOTAL TANPA LIBRARY GAGAL ---
   const downloadPhotoStrip = async () => {
-    const element = stripRef.current;
-    if (!element) return;
+    const previewElement = stripRef.current;
+    if (!previewElement || photos.length < 4) {
+      alert("Harap ambil 4 foto terlebih dahulu.");
+      return;
+    }
 
-    // Mengukur dimensi elemen yang sebenarnya di layar
-    const rect = element.getBoundingClientRect();
-    const elementWidth = rect.width;
-    const elementHeight = rect.height;
-
-    const clone = element.cloneNode(true) as HTMLElement;
-    
-    // Menerapkan dimensi yang diukur untuk menjaga proporsi
-    clone.style.width = `${elementWidth}px`;
-    clone.style.height = `${elementHeight}px`;
-    clone.style.position = 'absolute';
-    clone.style.left = '-9999px';
-    clone.style.top = '0px';
-    
-    document.body.appendChild(clone);
-    
-    await new Promise(resolve => setTimeout(resolve, 50));
+    document.body.style.cursor = 'wait';
 
     try {
-      // Memerintahkan html2canvas untuk menggunakan ukuran yang sudah pasti
-      const canvas = await html2canvas(clone, {
-        scale: 3, // Skala 3x untuk hasil super tajam
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: null,
-        // Perintah paling penting:
-        width: elementWidth,
-        height: elementHeight,
-      });
+      // LANGKAH 1: UKUR SEMUANYA DARI PRATINJAU
+      const previewRect = previewElement.getBoundingClientRect();
+      const aspectRatio = previewRect.height / previewRect.width;
 
+      // Kumpulkan semua elemen gambar dari pratinjau
+      const imageElements = Array.from(previewElement.querySelectorAll('img'));
+      const textElement = textRef.current;
+      if (!textElement || imageElements.length < 4) throw new Error("Elemen internal tidak ditemukan.");
+
+      // LANGKAH 2: BUAT KANVAS BARU DENGAN RESOLUSI TINGGI & PROPORSIONAL
+      const finalWidth = 1500; // Lebar gambar final (resolusi tajam)
+      const finalHeight = finalWidth * aspectRatio; // Tinggi dihitung dari rasio pratinjau
+
+      const canvas = document.createElement('canvas');
+      canvas.width = finalWidth;
+      canvas.height = finalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Gagal membuat kanvas.');
+
+      // LANGKAH 3: GAMBAR BACKGROUND
+      if (background.startsWith('data:image')) {
+        const bgImage = new Image();
+        bgImage.crossOrigin = 'anonymous';
+        await new Promise<void>((resolve) => { bgImage.onload = () => resolve(); bgImage.src = background; });
+        ctx.drawImage(bgImage, 0, 0, finalWidth, finalHeight);
+      } else {
+        ctx.fillStyle = background;
+        ctx.fillRect(0, 0, finalWidth, finalHeight);
+      }
+
+      // LANGKAH 4: GAMBAR ULANG SETIAP FOTO DENGAN POSISI & UKURAN YANG TEPAT
+      for (const imgEl of imageElements) {
+        const imgRect = imgEl.getBoundingClientRect();
+        
+        // Hitung posisi dan ukuran relatif terhadap pratinjau
+        const x = (imgRect.left - previewRect.left) / previewRect.width * finalWidth;
+        const y = (imgRect.top - previewRect.top) / previewRect.height * finalHeight;
+        const w = imgRect.width / previewRect.width * finalWidth;
+        const h = imgRect.height / previewRect.height * finalHeight;
+        const borderRadius = (parseFloat(getComputedStyle(imgEl).borderRadius) / previewRect.width) * finalWidth;
+
+        const photoImg = new Image();
+        photoImg.crossOrigin = 'anonymous';
+        await new Promise<void>((resolve) => { photoImg.onload = () => resolve(); photoImg.src = imgEl.src; });
+        
+        // Membuat efek rounded corner secara manual
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x + borderRadius, y);
+        ctx.lineTo(x + w - borderRadius, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + borderRadius);
+        ctx.lineTo(x + w, y + h - borderRadius);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - borderRadius, y + h);
+        ctx.lineTo(x + borderRadius, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - borderRadius);
+        ctx.lineTo(x, y + borderRadius);
+        ctx.quadraticCurveTo(x, y, x + borderRadius, y);
+        ctx.closePath();
+        ctx.clip();
+        
+        // Gambar foto yang sudah di-mirror ke dalam area rounded
+        ctx.translate(finalWidth, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(photoImg, finalWidth - x - w, y, w, h);
+        ctx.restore();
+      }
+
+      // LANGKAH 5: GAMBAR ULANG TEKS
+      const textRect = textElement.getBoundingClientRect();
+      const textStyle = getComputedStyle(textElement);
+      const x = (textRect.left - previewRect.left + textRect.width / 2) / previewRect.width * finalWidth;
+      const y = (textRect.top - previewRect.top + textRect.height / 2) / previewRect.height * finalHeight;
+      
+      ctx.fillStyle = textStyle.color;
+      ctx.font = `${textStyle.fontWeight} ${parseFloat(textStyle.fontSize) / previewRect.width * finalWidth}px ${textStyle.fontFamily}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(textElement.innerText, x, y);
+
+      // LANGKAH 6: UNDUH HASIL AKHIR
       const link = document.createElement('a');
       link.download = `photostrip-gstudio-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      document.body.appendChild(link);
+      link.href = canvas.toDataURL('image/png', 1.0);
       link.click();
-      document.body.removeChild(link);
+
     } catch (error) {
-      console.error('Error downloading photo strip:', error);
+      console.error('Terjadi kesalahan fatal:', error);
+      alert('Maaf, terjadi kesalahan saat membuat gambar.');
     } finally {
-      document.body.removeChild(clone);
+      document.body.style.cursor = 'default';
     }
   };
 
@@ -108,9 +166,9 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
             </div>
           ))}
         </div>
-
         <div className="text-center py-16">
-          <p className="font-bold text-2xl text-white tracking-widest">
+          {/* Tambahkan ref ke elemen teks ini */}
+          <p ref={textRef} className="font-bold text-2xl text-white tracking-widest">
             G.STUDIO
           </p>
         </div>
