@@ -18,47 +18,52 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
 
   const downloadPhotoStrip = async () => {
     const element = stripRef.current;
-    if (!element) return;
+    if (!element) {
+      console.error("Referensi ke elemen photostrip tidak ditemukan.");
+      return;
+    }
 
-    // --- PERUBAHAN DIMULAI DI SINI ---
-
-    // Dapatkan ukuran asli elemen
-    const originalWidth = element.clientWidth;
-    const originalHeight = element.clientHeight;
-
+    // --- PERBAIKAN UTAMA DI SINI ---
+    
+    // 1. Kloning elemen untuk stabilitas rendering
     const clone = element.cloneNode(true) as HTMLElement;
 
-    // Atur gaya untuk klon agar sesuai dengan aslinya
-    clone.style.width = `${originalWidth}px`;
-    clone.style.height = `${originalHeight}px`;
+    // 2. Atur gaya untuk klon agar ukurannya konsisten
+    // `max-w-sm` di Tailwind setara dengan 384px.
+    // Dengan mengatur lebar tetap dan tinggi otomatis, rasio aspek akan terjaga.
+    clone.style.width = '384px'; 
+    clone.style.height = 'auto';
     clone.style.position = 'absolute';
-    clone.style.left = '-9999px';
+    clone.style.left = '-9999px'; // Posisikan di luar layar
     clone.style.top = '0px';
 
+    // 3. Tambahkan klon ke body agar bisa di-render
     document.body.appendChild(clone);
+    
+    // Memberi sedikit jeda agar browser sempat me-render klon dengan benar
+    await new Promise(resolve => setTimeout(resolve, 50));
 
     try {
       const canvas = await html2canvas(clone, {
-        scale: 2, // Meningkatkan resolusi untuk kualitas yang lebih baik
+        scale: 2, // Resolusi tinggi untuk kualitas cetak
         useCORS: true,
         allowTaint: true,
-        logging: false,
+        logging: true, // Aktifkan logging untuk debug jika perlu
         backgroundColor: null,
-        // Atur lebar dan tinggi canvas secara eksplisit
-        width: originalWidth,
-        height: originalHeight,
       });
-      // --- PERUBAHAN SELESAI DI SINI ---
 
       const link = document.createElement('a');
-      link.download = `photostrip-jstudio-${Date.now()}.png`;
+      link.download = `photostrip-gstudio-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
-      document.body.appendChild(link);
+      document.body.appendChild(link); // Tambahkan link ke body untuk kompatibilitas browser
       link.click();
-      document.body.removeChild(link);
+      document.body.removeChild(link); // Hapus link setelah di-klik
+
     } catch (error) {
-      console.error('Error downloading photo strip:', error);
+      console.error('Gagal membuat kanvas dari elemen:', error);
+      alert('Maaf, terjadi kesalahan saat mencoba mengunduh gambar. Silakan periksa konsol untuk detail.');
     } finally {
+      // 4. Selalu hapus klon setelah selesai
       document.body.removeChild(clone);
     }
   };
@@ -86,7 +91,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
 
       <div
         ref={stripRef}
-        className="w-full max-w-sm mx-auto overflow-hidden"
+        className="w-full max-w-sm mx-auto overflow-hidden" // `max-w-sm` adalah kunci
         style={backgroundStyle}
       >
         <div className="p-4 space-y-6">
