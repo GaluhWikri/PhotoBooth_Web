@@ -1,11 +1,12 @@
 import React, { useRef } from 'react';
 import { Download, Image as ImageIcon } from 'lucide-react';
-import html2canvas from 'html2canvas';
+
+// Tidak lagi memerlukan html2canvas untuk fungsi download utama
+// import html2canvas from 'html2canvas';
 
 interface Photo {
   id: string;
   dataUrl: string;
-  timestamp: number;
 }
 
 interface PhotoStripProps {
@@ -16,54 +17,103 @@ interface PhotoStripProps {
 const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
   const stripRef = useRef<HTMLDivElement>(null);
 
+  // --- FUNGSI DOWNLOAD BARU YANG TELAH DITULIS ULANG TOTAL ---
   const downloadPhotoStrip = async () => {
     const element = stripRef.current;
     if (!element) return;
 
-    // --- PERBAIKAN UTAMA DI SINI ---
-
-    // 1. Dapatkan dimensi elemen yang sesungguhnya saat ditampilkan di layar
-    const rect = element.getBoundingClientRect();
-    const elementWidth = rect.width;
-    const elementHeight = rect.height;
-
-    // Menambahkan kursor loading untuk UX
+    // Menampilkan kursor loading untuk feedback
     document.body.style.cursor = 'wait';
 
     try {
-      // 2. Render canvas dengan dimensi yang sama persis dengan elemen di layar
-      const canvas = await html2canvas(element, {
-        // Menggunakan dimensi dari getBoundingClientRect untuk presisi
-        width: elementWidth,
-        height: elementHeight,
-        
-        // Skala untuk resolusi tinggi
-        scale: 2,
-        
-        // Pengaturan penting lainnya
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: null,
-
-        // Memberi konteks window untuk rendering yang lebih baik
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight,
-        x: element.scrollLeft,
-        y: element.scrollTop,
-      });
+      // 1. Tentukan dimensi output gambar (resolusi tinggi)
+      const outputWidth = 1000; // Lebar gambar final dalam piksel
       
-      // 3. Buat link dan mulai proses unduh
+      // Ambil rasio aspek dari elemen preview yang terlihat di layar
+      const previewRect = element.getBoundingClientRect();
+      const aspectRatio = previewRect.height / previewRect.width;
+      const outputHeight = outputWidth * aspectRatio;
+
+      // 2. Buat kanvas baru di memori
+      const canvas = document.createElement('canvas');
+      canvas.width = outputWidth;
+      canvas.height = outputHeight;
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        throw new Error('Tidak bisa mendapatkan konteks 2D kanvas.');
+      }
+      
+      // 3. Gambar background (warna atau gambar)
+      if (background.startsWith('data:image')) {
+        const bgImage = new Image();
+        bgImage.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+            bgImage.onload = resolve;
+            bgImage.onerror = reject;
+            bgImage.src = background;
+        });
+        // Simulasikan background-size: cover
+        const hRatio = canvas.width / bgImage.width;
+        const vRatio = canvas.height / bgImage.height;
+        const ratio  = Math.max(hRatio, vRatio);
+        const centerShift_x = (canvas.width - bgImage.width * ratio) / 2;
+        const centerShift_y = (canvas.height - bgImage.height * ratio) / 2;  
+        ctx.drawImage(bgImage, 0, 0, bgImage.width, bgImage.height,
+                      centerShift_x, centerShift_y, bgImage.width * ratio, bgImage.height * ratio);  
+      } else {
+        ctx.fillStyle = background;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      
+      // 4. Hitung layout untuk foto dan teks
+      const padding = outputWidth * 0.05; // 5% padding
+      const spacing = outputWidth * 0.06; // 6% spasi
+      const photoWidth = outputWidth - padding * 2;
+      const photoHeight = photoWidth / (4/3); // Rasio aspek 4:3
+
+      // 5. Gambar setiap foto ke kanvas
+      for (let i = 0; i < 4; i++) {
+        if (photos[i]) {
+            const photoImg = new Image();
+            photoImg.crossOrigin = 'anonymous';
+            await new Promise((resolve, reject) => {
+                photoImg.onload = resolve;
+                photoImg.onerror = reject;
+                photoImg.src = photos[i].dataUrl;
+            });
+
+            const yPos = padding + i * (photoHeight + spacing);
+
+            // Simpan state kanvas
+            ctx.save();
+            // Pindahkan, balikkan, dan gambar
+            ctx.translate(padding + photoWidth, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(photoImg, 0, yPos, photoWidth, photoHeight);
+            // Kembalikan state kanvas
+            ctx.restore();
+        }
+      }
+
+      // 6. Gambar teks "G.STUDIO"
+      const textPosition = (padding + 4 * (photoHeight + spacing));
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${outputWidth * 0.1}px "Averia Serif Libre", serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('G.STUDIO', canvas.width / 2, textPosition);
+      
+      // 7. Trigger download
       const link = document.createElement('a');
       link.download = `photostrip-gstudio-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png', 1.0); // Kualitas gambar terbaik
+      link.href = canvas.toDataURL('image/png', 1.0);
       link.click();
 
     } catch (error) {
-      console.error('Gagal mengunduh photostrip:', error);
-      alert('Terjadi kesalahan saat mengunduh gambar. Silakan coba lagi.');
+      console.error('Gagal membuat atau mengunduh photostrip:', error);
+      alert('Maaf, terjadi kesalahan saat mengunduh gambar.');
     } finally {
-      // Selalu kembalikan kursor
       document.body.style.cursor = 'default';
     }
   };
