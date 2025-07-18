@@ -20,20 +20,21 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
     const element = stripRef.current;
     if (!element) return;
 
-    // Mengukur dimensi elemen yang sebenarnya di layar
-    const rect = element.getBoundingClientRect();
-
-    const clone = element.cloneNode(true) as HTMLElement;
+    // Mengukur tinggi elemen yang sebenarnya di layar
+    const renderedHeight = element.offsetHeight;
     
-    // Menerapkan dimensi yang diukur untuk menjaga proporsi
-    clone.style.width = `${rect.width}px`;
-    clone.style.height = `${rect.height}px`;
+    const clone = element.cloneNode(true) as HTMLElement;
+    clone.style.width = '384px';
+    
+    // Menggunakan tinggi yang diukur, bukan 'auto'
+    clone.style.height = `${renderedHeight}px`; 
+    
     clone.style.position = 'absolute';
     clone.style.left = '-9999px';
     clone.style.top = '0px';
-    
     document.body.appendChild(clone);
-    
+
+    // Memberi jeda agar klon sempat ter-render
     await new Promise(resolve => setTimeout(resolve, 50));
 
     try {
@@ -43,8 +44,6 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
         allowTaint: true,
         logging: false,
         backgroundColor: null,
-        width: rect.width, // Memastikan canvas dibuat dengan lebar yang benar
-        height: rect.height, // Memastikan canvas dibuat dengan tinggi yang benar
       });
       const link = document.createElement('a');
       link.download = `photostrip-gstudio-${Date.now()}.png`;
