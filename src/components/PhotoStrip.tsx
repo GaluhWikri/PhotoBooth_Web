@@ -14,120 +14,101 @@ interface PhotoStripProps {
 const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
   const stripRef = useRef<HTMLDivElement>(null);
 
-  // --- FUNGSI DOWNLOAD YANG TELAH DIPERBAIKI TOTAL ---
+  // --- FUNGSI UNDUH YANG DITULIS ULANG TOTAL - BERDASARKAN PRATINJAU ---
   const downloadPhotoStrip = async () => {
-    const element = stripRef.current;
-    if (!element) return;
+    const previewElement = stripRef.current;
+    if (!previewElement || photos.length < 4) {
+      alert("Harap ambil 4 foto terlebih dahulu.");
+      return;
+    }
 
-    // Menampilkan kursor loading untuk feedback
     document.body.style.cursor = 'wait';
 
     try {
-      // 1. Ambil dimensi aktual dari preview element
-      const previewRect = element.getBoundingClientRect();
+      // LANGKAH 1: UKUR PRATINJAU YANG MUNCUL DI LAYAR PENGGUNA
+      // Ini adalah kunci utama untuk mendapatkan proporsi yang benar.
+      const previewRect = previewElement.getBoundingClientRect();
       const previewWidth = previewRect.width;
       const previewHeight = previewRect.height;
-      
-      // 2. Tentukan skala untuk output berkualitas tinggi
-      const scale = 3; // 3x resolusi untuk kualitas tinggi
-      const outputWidth = previewWidth * scale;
-      const outputHeight = previewHeight * scale;
+      const aspect_ratio = previewHeight / previewWidth;
 
-      // 3. Buat kanvas dengan dimensi yang sama persis seperti preview
+      // LANGKAH 2: BUAT KANVAS BARU DENGAN RESOLUSI TINGGI TAPI PROPORSIONAL
+      const finalWidth = 1500; // Lebar gambar final (resolusi tinggi)
+      const finalHeight = finalWidth * aspect_ratio; // Tinggi dihitung dari rasio aspek pratinjau
+
       const canvas = document.createElement('canvas');
-      canvas.width = outputWidth;
-      canvas.height = outputHeight;
+      canvas.width = finalWidth;
+      canvas.height = finalHeight;
       const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Gagal membuat kanvas.');
 
-      if (!ctx) {
-        throw new Error('Tidak bisa mendapatkan konteks 2D kanvas.');
-      }
-      
-      // 4. Gambar background sesuai dengan preview
+      // LANGKAH 3: GAMBAR BACKGROUND
       if (background.startsWith('data:image')) {
         const bgImage = new Image();
         bgImage.crossOrigin = 'anonymous';
-        await new Promise((resolve, reject) => {
-            bgImage.onload = resolve;
-            bgImage.onerror = reject;
-            bgImage.src = background;
+        await new Promise<void>((resolve, reject) => {
+          bgImage.onload = () => resolve();
+          bgImage.onerror = reject;
+          bgImage.src = background;
         });
-        // Simulasikan background-size: cover
-        const hRatio = canvas.width / bgImage.width;
-        const vRatio = canvas.height / bgImage.height;
-        const ratio  = Math.max(hRatio, vRatio);
-        const centerShift_x = (canvas.width - bgImage.width * ratio) / 2;
-        const centerShift_y = (canvas.height - bgImage.height * ratio) / 2;  
-        ctx.drawImage(bgImage, 0, 0, bgImage.width, bgImage.height,
-                      centerShift_x, centerShift_y, bgImage.width * ratio, bgImage.height * ratio);  
+        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
       } else {
         ctx.fillStyle = background;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
       
-      // 5. Cari semua elemen foto dalam preview untuk mendapatkan posisi yang tepat
-      const photoContainers = element.querySelectorAll('.photo-container');
+      // LANGKAH 4: REPLIKASI LAYOUT FOTO DAN TEKS
+      // Menggunakan persentase yang sama seperti di layout CSS (Tailwind)
+      // p-4 -> padding: 1rem; space-y-6 -> margin-top: 1.5rem
+      // Kita konversi ke persentase relatif terhadap tinggi pratinjau
+      const PADDING_TOP_RATIO = 16 / previewHeight;
+      const PADDING_SIDES_RATIO = 16 / previewWidth;
+      const SPACING_RATIO = 24 / previewHeight;
+      const TEXT_AREA_HEIGHT_RATIO = (16 * 4) / previewHeight; // py-16 -> 4rem
+
+      const paddingY = finalHeight * PADDING_TOP_RATIO;
+      const paddingX = finalWidth * PADDING_SIDES_RATIO;
+      const spacingY = finalHeight * SPACING_RATIO;
       
-      // 6. Hitung padding dan posisi berdasarkan preview aktual
-      const containerPadding = 16 * scale; // p-4 = 16px
-      
-      // 7. Gambar setiap foto berdasarkan posisi aktual di preview
+      const photoAreaTotalHeight = finalHeight * (1 - TEXT_AREA_HEIGHT_RATIO - PADDING_TOP_RATIO - PADDING_TOP_RATIO);
+      const photoHeight = (photoAreaTotalHeight - (3 * spacingY)) / 4;
+      const photoWidth = finalWidth - (2 * paddingX);
+
+      // LANGKAH 5: GAMBAR SETIAP FOTO
       for (let i = 0; i < 4; i++) {
-        if (photos[i] && photoContainers[i]) {
-          const photoImg = new Image();
-          photoImg.crossOrigin = 'anonymous';
-          await new Promise((resolve, reject) => {
-              photoImg.onload = resolve;
-              photoImg.onerror = reject;
-              photoImg.src = photos[i].dataUrl;
-          });
+        const photoImg = new Image();
+        photoImg.crossOrigin = 'anonymous';
+        await new Promise<void>((resolve, reject) => {
+          photoImg.onload = () => resolve();
+          photoImg.onerror = reject;
+          photoImg.src = photos[i].dataUrl;
+        });
+        const yPos = paddingY + i * (photoHeight + spacingY);
 
-          // Hitung posisi berdasarkan container
-          const containerRect = photoContainers[i].getBoundingClientRect();
-          const elementRect = element.getBoundingClientRect();
-          
-          // Posisi relatif terhadap container utama
-          const relativeX = (containerRect.left - elementRect.left) * scale;
-          const relativeY = (containerRect.top - elementRect.top) * scale;
-          const photoWidth = containerRect.width * scale;
-          const photoHeight = containerRect.height * scale;
-
-          // Simpan state kanvas
-          ctx.save();
-          // Pindahkan, balikkan, dan gambar (mirror effect)
-          ctx.translate(relativeX + photoWidth, relativeY);
-          ctx.scale(-1, 1);
-          ctx.drawImage(photoImg, 0, 0, photoWidth, photoHeight);
-          // Kembalikan state kanvas
-          ctx.restore();
-        }
-      }
-
-      // 8. Cari elemen teks dan gambar sesuai posisi aktual
-      const textElement = element.querySelector('.strip-text');
-      if (textElement) {
-        const textRect = textElement.getBoundingClientRect();
-        const elementRect = element.getBoundingClientRect();
-        
-        const textX = (textRect.left - elementRect.left + textRect.width / 2) * scale;
-        const textY = (textRect.top - elementRect.top + textRect.height / 2) * scale;
-        
-        ctx.fillStyle = 'white';
-        ctx.font = `bold ${24 * scale}px "Averia Serif Libre", serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('G.STUDIO', textX, textY);
+        ctx.save();
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(photoImg, paddingX, yPos, photoWidth, photoHeight);
+        ctx.restore();
       }
       
-      // 9. Trigger download
+      // LANGKAH 6: GAMBAR TEKS
+      const textYPos = finalHeight - ((finalHeight * TEXT_AREA_HEIGHT_RATIO) / 2);
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${finalWidth * 0.06}px "Averia Serif Libre", serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('G.STUDIO', canvas.width / 2, textYPos);
+
+      // LANGKAH 7: UNDUH HASIL AKHIR
       const link = document.createElement('a');
       link.download = `photostrip-gstudio-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png', 1.0);
       link.click();
 
     } catch (error) {
-      console.error('Gagal membuat atau mengunduh photostrip:', error);
-      alert('Maaf, terjadi kesalahan saat mengunduh gambar.');
+      console.error('Terjadi kesalahan fatal saat membuat gambar:', error);
+      alert('Maaf, terjadi kesalahan yang tidak terduga saat mengunduh gambar.');
     } finally {
       document.body.style.cursor = 'default';
     }
@@ -156,12 +137,13 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
 
       <div
         ref={stripRef}
+        id="photo-strip-preview"
         className="w-full max-w-sm mx-auto overflow-hidden"
         style={backgroundStyle}
       >
         <div className="p-4 space-y-6">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="photo-container" data-photo-index={index}>
+            <div key={index}>
               {photos[index] ? (
                 <img
                   src={photos[index].dataUrl}
@@ -177,9 +159,8 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
             </div>
           ))}
         </div>
-
         <div className="text-center py-16">
-          <p className="font-bold text-2xl text-white tracking-widest strip-text">
+          <p className="font-bold text-2xl text-white tracking-widest">
             G.STUDIO
           </p>
         </div>
