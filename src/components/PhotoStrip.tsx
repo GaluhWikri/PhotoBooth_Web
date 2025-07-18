@@ -10,32 +10,46 @@ interface Photo {
 
 interface PhotoStripProps {
   photos: Photo[];
-  background: string; // Prop diubah menjadi `background`
+  background: string;
 }
 
 const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
   const stripRef = useRef<HTMLDivElement>(null);
 
-  // Fungsi download tetap sama, sudah dirancang untuk menangani style
   const downloadPhotoStrip = async () => {
     const element = stripRef.current;
     if (!element) return;
+
+    // --- PERUBAHAN DIMULAI DI SINI ---
+
+    // Dapatkan ukuran asli elemen
+    const originalWidth = element.clientWidth;
+    const originalHeight = element.clientHeight;
+
     const clone = element.cloneNode(true) as HTMLElement;
-    clone.style.width = '384px';
-    clone.style.height = 'auto';
+
+    // Atur gaya untuk klon agar sesuai dengan aslinya
+    clone.style.width = `${originalWidth}px`;
+    clone.style.height = `${originalHeight}px`;
     clone.style.position = 'absolute';
     clone.style.left = '-9999px';
     clone.style.top = '0px';
+
     document.body.appendChild(clone);
+
     try {
       const canvas = await html2canvas(clone, {
-        scale: 2,
+        scale: 2, // Meningkatkan resolusi untuk kualitas yang lebih baik
         useCORS: true,
         allowTaint: true,
         logging: false,
-        // Hapus backgroundColor agar transparan jika ada gambar
         backgroundColor: null,
+        // Atur lebar dan tinggi canvas secara eksplisit
+        width: originalWidth,
+        height: originalHeight,
       });
+      // --- PERUBAHAN SELESAI DI SINI ---
+
       const link = document.createElement('a');
       link.download = `photostrip-jstudio-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
@@ -49,7 +63,6 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
     }
   };
 
-  // Logika untuk menentukan style background
   const backgroundStyle = background.startsWith('data:image')
     ? { backgroundImage: `url(${background})`, backgroundSize: 'cover', backgroundPosition: 'center' }
     : { backgroundColor: background };
@@ -74,7 +87,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
       <div
         ref={stripRef}
         className="w-full max-w-sm mx-auto overflow-hidden"
-        style={backgroundStyle} // Terapkan style di sini
+        style={backgroundStyle}
       >
         <div className="p-4 space-y-6">
           {Array.from({ length: 4 }).map((_, index) => (
