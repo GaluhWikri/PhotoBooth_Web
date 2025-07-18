@@ -1,9 +1,6 @@
 import React, { useRef } from 'react';
 import { Download, Image as ImageIcon } from 'lucide-react';
 
-// Tidak lagi memerlukan html2canvas untuk fungsi download utama
-// import html2canvas from 'html2canvas';
-
 interface Photo {
   id: string;
   dataUrl: string;
@@ -17,7 +14,7 @@ interface PhotoStripProps {
 const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
   const stripRef = useRef<HTMLDivElement>(null);
 
-  // --- FUNGSI DOWNLOAD BARU YANG TELAH DITULIS ULANG TOTAL ---
+  // --- FUNGSI DOWNLOAD YANG TELAH DIPERBAIKI ---
   const downloadPhotoStrip = async () => {
     const element = stripRef.current;
     if (!element) return;
@@ -27,14 +24,20 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
 
     try {
       // 1. Tentukan dimensi output gambar (resolusi tinggi)
-      const outputWidth = 1000; // Lebar gambar final dalam piksel
+      const outputWidth = 600; // Lebar gambar final dalam piksel
       
-      // Ambil rasio aspek dari elemen preview yang terlihat di layar
-      const previewRect = element.getBoundingClientRect();
-      const aspectRatio = previewRect.height / previewRect.width;
-      const outputHeight = outputWidth * aspectRatio;
+      // 2. Hitung dimensi berdasarkan layout yang benar
+      const padding = outputWidth * 0.05; // 5% padding
+      const spacing = outputWidth * 0.06; // 6% spasi antar foto
+      const photoWidth = outputWidth - padding * 2;
+      const photoHeight = photoWidth / (4/3); // Rasio aspek 4:3 untuk setiap foto
+      
+      // 3. Hitung tinggi total strip secara akurat
+      const textAreaHeight = outputWidth * 0.25; // Area untuk teks G.STUDIO
+      const totalPhotosHeight = (photoHeight * 4) + (spacing * 3); // 4 foto + 3 spasi
+      const outputHeight = padding * 2 + totalPhotosHeight + textAreaHeight;
 
-      // 2. Buat kanvas baru di memori
+      // 4. Buat kanvas baru di memori
       const canvas = document.createElement('canvas');
       canvas.width = outputWidth;
       canvas.height = outputHeight;
@@ -44,7 +47,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
         throw new Error('Tidak bisa mendapatkan konteks 2D kanvas.');
       }
       
-      // 3. Gambar background (warna atau gambar)
+      // 5. Gambar background (warna atau gambar)
       if (background.startsWith('data:image')) {
         const bgImage = new Image();
         bgImage.crossOrigin = 'anonymous';
@@ -66,13 +69,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
       
-      // 4. Hitung layout untuk foto dan teks
-      const padding = outputWidth * 0.05; // 5% padding
-      const spacing = outputWidth * 0.06; // 6% spasi
-      const photoWidth = outputWidth - padding * 2;
-      const photoHeight = photoWidth / (4/3); // Rasio aspek 4:3
-
-      // 5. Gambar setiap foto ke kanvas
+      // 6. Gambar setiap foto ke kanvas dengan positioning yang benar
       for (let i = 0; i < 4; i++) {
         if (photos[i]) {
             const photoImg = new Image();
@@ -83,28 +80,29 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
                 photoImg.src = photos[i].dataUrl;
             });
 
+            // Hitung posisi Y untuk setiap foto
             const yPos = padding + i * (photoHeight + spacing);
 
             // Simpan state kanvas
             ctx.save();
-            // Pindahkan, balikkan, dan gambar
-            ctx.translate(padding + photoWidth, 0);
+            // Pindahkan, balikkan, dan gambar (mirror effect)
+            ctx.translate(padding + photoWidth, yPos);
             ctx.scale(-1, 1);
-            ctx.drawImage(photoImg, 0, yPos, photoWidth, photoHeight);
+            ctx.drawImage(photoImg, 0, 0, photoWidth, photoHeight);
             // Kembalikan state kanvas
             ctx.restore();
         }
       }
 
-      // 6. Gambar teks "G.STUDIO"
-      const textPosition = (padding + 4 * (photoHeight + spacing));
+      // 7. Gambar teks "G.STUDIO" di bagian bawah
+      const textYPosition = padding + totalPhotosHeight + (textAreaHeight / 2);
       ctx.fillStyle = 'white';
-      ctx.font = `bold ${outputWidth * 0.1}px "Averia Serif Libre", serif`;
+      ctx.font = `bold ${outputWidth * 0.08}px "Averia Serif Libre", serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('G.STUDIO', canvas.width / 2, textPosition);
+      ctx.fillText('G.STUDIO', canvas.width / 2, textYPosition);
       
-      // 7. Trigger download
+      // 8. Trigger download
       const link = document.createElement('a');
       link.download = `photostrip-gstudio-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png', 1.0);
