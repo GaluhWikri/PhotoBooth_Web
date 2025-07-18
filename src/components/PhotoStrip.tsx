@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Download, Image as ImageIcon } from 'lucide-react';
 
-// html2canvas dan library sejenis TIDAK LAGI DIGUNAKAN.
+// Library eksternal tidak lagi digunakan untuk menggambar.
 
 interface Photo {
   id: string;
@@ -18,7 +18,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
   const stripRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
 
-  // --- FUNGSI UNDUH BARU: MENGUKUR PRATINJAU & MENGGAMBAR ULANG ---
+  // --- FUNGSI UNDUH BARU DENGAN LOGIKA 'OBJECT-FIT: COVER' YANG BENAR ---
   const downloadPhotoStrip = async () => {
     const previewElement = stripRef.current;
     if (!previewElement || photos.length < 4) {
@@ -29,16 +29,16 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
     document.body.style.cursor = 'wait';
 
     try {
-      // LANGKAH 1: UKUR SEMUA ELEMEN DARI PRATINJAU SECARA PRESISI
+      // 1. UKUR SEMUA ELEMEN DARI PRATINJAU SECARA PRESISI
       const previewRect = previewElement.getBoundingClientRect();
       const aspectRatio = previewRect.height / previewRect.width;
       const imageElements = Array.from(previewElement.querySelectorAll('img'));
       const textElement = textRef.current;
       if (!textElement || imageElements.length < 4) throw new Error("Elemen internal tidak ditemukan.");
 
-      // LANGKAH 2: BUAT KANVAS BARU DENGAN RESOLUSI TINGGI & PROPORSIONAL
-      const finalWidth = 1500; // Lebar gambar final (resolusi tajam)
-      const finalHeight = finalWidth * aspectRatio; // Tinggi dihitung dari rasio pratinjau
+      // 2. BUAT KANVAS BARU DENGAN RESOLUSI TINGGI & PROPORSIONAL
+      const finalWidth = 1500; // Resolusi tinggi
+      const finalHeight = finalWidth * aspectRatio;
 
       const canvas = document.createElement('canvas');
       canvas.width = finalWidth;
@@ -46,7 +46,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Gagal membuat kanvas.');
 
-      // LANGKAH 3: GAMBAR BACKGROUND
+      // 3. GAMBAR BACKGROUND
       if (background.startsWith('data:image')) {
         const bgImage = new Image();
         bgImage.crossOrigin = 'anonymous';
@@ -61,16 +61,15 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
         ctx.fillRect(0, 0, finalWidth, finalHeight);
       }
 
-      // LANGKAH 4: GAMBAR ULANG SETIAP FOTO DENGAN POSISI & UKURAN YANG TEPAT
+      // 4. GAMBAR ULANG SETIAP FOTO DENGAN EFEK ZOOM (OBJECT-FIT: COVER)
       for (const imgEl of imageElements) {
         const imgRect = imgEl.getBoundingClientRect();
         
-        // Hitung posisi dan ukuran relatif terhadap pratinjau
-        const x = (imgRect.left - previewRect.left) / previewRect.width * finalWidth;
-        const y = (imgRect.top - previewRect.top) / previewRect.height * finalHeight;
-        const w = imgRect.width / previewRect.width * finalWidth;
-        const h = imgRect.height / previewRect.height * finalHeight;
-        // Mengukur sudut rounded dari CSS dan menskalakannya
+        // Hitung posisi dan ukuran slot foto di kanvas final
+        const slotX = (imgRect.left - previewRect.left) / previewRect.width * finalWidth;
+        const slotY = (imgRect.top - previewRect.top) / previewRect.height * finalHeight;
+        const slotWidth = imgRect.width / previewRect.width * finalWidth;
+        const slotHeight = imgRect.height / previewRect.height * finalHeight;
         const borderRadius = (parseFloat(getComputedStyle(imgEl).borderRadius) / previewRect.width) * finalWidth;
 
         const photoImg = new Image();
@@ -81,43 +80,54 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
           photoImg.src = imgEl.src;
         });
         
-        // Membuat efek rounded corner secara manual
+        // Membuat area rounded
         ctx.save();
         ctx.beginPath();
-        ctx.moveTo(x + borderRadius, y);
-        ctx.lineTo(x + w - borderRadius, y);
-        ctx.quadraticCurveTo(x + w, y, x + w, y + borderRadius);
-        ctx.lineTo(x + w, y + h - borderRadius);
-        ctx.quadraticCurveTo(x + w, y + h, x + w - borderRadius, y + h);
-        ctx.lineTo(x + borderRadius, y + h);
-        ctx.quadraticCurveTo(x, y + h, x, y + h - borderRadius);
-        ctx.lineTo(x, y + borderRadius);
-        ctx.quadraticCurveTo(x, y, x + borderRadius, y);
+        ctx.moveTo(slotX + borderRadius, slotY);
+        ctx.lineTo(slotX + slotWidth - borderRadius, slotY);
+        ctx.quadraticCurveTo(slotX + slotWidth, slotY, slotX + slotWidth, slotY + borderRadius);
+        ctx.lineTo(slotX + slotWidth, slotY + slotHeight - borderRadius);
+        ctx.quadraticCurveTo(slotX + slotWidth, slotY + slotHeight, slotX + slotWidth - borderRadius, slotY + slotHeight);
+        ctx.lineTo(slotX + borderRadius, slotY + slotHeight);
+        ctx.quadraticCurveTo(slotX, slotY + slotHeight, slotX, slotY + slotHeight - borderRadius);
+        ctx.lineTo(slotX, slotY + borderRadius);
+        ctx.quadraticCurveTo(slotX, slotY, slotX + borderRadius, slotY);
         ctx.closePath();
         ctx.clip();
         
-        // Gambar foto yang sudah di-mirror ke dalam area rounded
+        // --- INI ADALAH LOGIKA 'OBJECT-FIT: COVER' YANG BENAR ---
+        const slotAspectRatio = slotWidth / slotHeight;
+        const imgAspectRatio = photoImg.width / photoImg.height;
+        let sourceX = 0, sourceY = 0, sourceWidth = photoImg.width, sourceHeight = photoImg.height;
+
+        if (imgAspectRatio > slotAspectRatio) { // Gambar lebih lebar dari slot
+          sourceWidth = photoImg.height * slotAspectRatio;
+          sourceX = (photoImg.width - sourceWidth) / 2;
+        } else { // Gambar lebih tinggi dari slot
+          sourceHeight = photoImg.width / slotAspectRatio;
+          sourceY = (photoImg.height - sourceHeight) / 2;
+        }
+        
+        // Gambar bagian foto yang sudah di-zoom dan di-mirror
         ctx.translate(finalWidth, 0);
         ctx.scale(-1, 1);
-        ctx.drawImage(photoImg, finalWidth - x - w, y, w, h);
+        ctx.drawImage(photoImg, sourceX, sourceY, sourceWidth, sourceHeight, finalWidth - slotX - slotWidth, slotY, slotWidth, slotHeight);
         ctx.restore();
       }
 
-      // LANGKAH 5: GAMBAR ULANG TEKS PERSIS SEPERTI PRATINJAU
+      // 5. GAMBAR ULANG TEKS
       const textRect = textElement.getBoundingClientRect();
       const textStyle = getComputedStyle(textElement);
-      // Hitung posisi tengah teks secara presisi
       const x = (textRect.left - previewRect.left + textRect.width / 2) / previewRect.width * finalWidth;
       const y = (textRect.top - previewRect.top + textRect.height / 2) / previewRect.height * finalHeight;
       
       ctx.fillStyle = textStyle.color;
-      // Ambil dan skalakan ukuran font dari pratinjau
       ctx.font = `${textStyle.fontWeight} ${parseFloat(textStyle.fontSize) / previewRect.width * finalWidth}px ${textStyle.fontFamily.split(',')[0]}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(textElement.innerText, x, y);
 
-      // LANGKAH 6: UNDUH HASIL AKHIR
+      // 6. UNDUH HASIL AKHIR
       const link = document.createElement('a');
       link.download = `photostrip-gstudio-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png', 1.0);
@@ -176,7 +186,6 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
           ))}
         </div>
         <div className="text-center py-16">
-          {/* Tambahkan ref ke elemen teks ini agar bisa diukur */}
           <p ref={textRef} className="font-bold text-2xl text-white tracking-widest">
             G.STUDIO
           </p>
