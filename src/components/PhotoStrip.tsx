@@ -1,116 +1,61 @@
 import React, { useRef } from 'react';
 import { Download, Image as ImageIcon } from 'lucide-react';
+import html2canvas from 'html2canvas';
 
 interface Photo {
   id: string;
   dataUrl: string;
+  timestamp: number;
 }
 
 interface PhotoStripProps {
   photos: Photo[];
-  background: string;
+  background: string; 
 }
 
 const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
   const stripRef = useRef<HTMLDivElement>(null);
 
-  // --- FUNGSI UNDUH YANG DITULIS ULANG TOTAL - BERDASARKAN PRATINJAU ---
   const downloadPhotoStrip = async () => {
-    const previewElement = stripRef.current;
-    if (!previewElement || photos.length < 4) {
-      alert("Harap ambil 4 foto terlebih dahulu.");
-      return;
-    }
+    const element = stripRef.current;
+    if (!element) return;
 
-    document.body.style.cursor = 'wait';
+    // Mengukur dimensi elemen yang sebenarnya di layar
+    const rect = element.getBoundingClientRect();
+
+    const clone = element.cloneNode(true) as HTMLElement;
+    
+    // Menerapkan dimensi yang diukur untuk menjaga proporsi
+    clone.style.width = `${rect.width}px`;
+    clone.style.height = `${rect.height}px`;
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    clone.style.top = '0px';
+    
+    document.body.appendChild(clone);
+    
+    await new Promise(resolve => setTimeout(resolve, 50));
 
     try {
-      // LANGKAH 1: UKUR PRATINJAU YANG MUNCUL DI LAYAR PENGGUNA
-      // Ini adalah kunci utama untuk mendapatkan proporsi yang benar.
-      const previewRect = previewElement.getBoundingClientRect();
-      const previewWidth = previewRect.width;
-      const previewHeight = previewRect.height;
-      const aspect_ratio = previewHeight / previewWidth;
-
-      // LANGKAH 2: BUAT KANVAS BARU DENGAN RESOLUSI TINGGI TAPI PROPORSIONAL
-      const finalWidth = 1500; // Lebar gambar final (resolusi tinggi)
-      const finalHeight = finalWidth * aspect_ratio; // Tinggi dihitung dari rasio aspek pratinjau
-
-      const canvas = document.createElement('canvas');
-      canvas.width = finalWidth;
-      canvas.height = finalHeight;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Gagal membuat kanvas.');
-
-      // LANGKAH 3: GAMBAR BACKGROUND
-      if (background.startsWith('data:image')) {
-        const bgImage = new Image();
-        bgImage.crossOrigin = 'anonymous';
-        await new Promise<void>((resolve, reject) => {
-          bgImage.onload = () => resolve();
-          bgImage.onerror = reject;
-          bgImage.src = background;
-        });
-        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-      } else {
-        ctx.fillStyle = background;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-      
-      // LANGKAH 4: REPLIKASI LAYOUT FOTO DAN TEKS
-      // Menggunakan persentase yang sama seperti di layout CSS (Tailwind)
-      // p-4 -> padding: 1rem; space-y-6 -> margin-top: 1.5rem
-      // Kita konversi ke persentase relatif terhadap tinggi pratinjau
-      const PADDING_TOP_RATIO = 16 / previewHeight;
-      const PADDING_SIDES_RATIO = 16 / previewWidth;
-      const SPACING_RATIO = 24 / previewHeight;
-      const TEXT_AREA_HEIGHT_RATIO = (16 * 4) / previewHeight; // py-16 -> 4rem
-
-      const paddingY = finalHeight * PADDING_TOP_RATIO;
-      const paddingX = finalWidth * PADDING_SIDES_RATIO;
-      const spacingY = finalHeight * SPACING_RATIO;
-      
-      const photoAreaTotalHeight = finalHeight * (1 - TEXT_AREA_HEIGHT_RATIO - PADDING_TOP_RATIO - PADDING_TOP_RATIO);
-      const photoHeight = (photoAreaTotalHeight - (3 * spacingY)) / 4;
-      const photoWidth = finalWidth - (2 * paddingX);
-
-      // LANGKAH 5: GAMBAR SETIAP FOTO
-      for (let i = 0; i < 4; i++) {
-        const photoImg = new Image();
-        photoImg.crossOrigin = 'anonymous';
-        await new Promise<void>((resolve, reject) => {
-          photoImg.onload = () => resolve();
-          photoImg.onerror = reject;
-          photoImg.src = photos[i].dataUrl;
-        });
-        const yPos = paddingY + i * (photoHeight + spacingY);
-
-        ctx.save();
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(photoImg, paddingX, yPos, photoWidth, photoHeight);
-        ctx.restore();
-      }
-      
-      // LANGKAH 6: GAMBAR TEKS
-      const textYPos = finalHeight - ((finalHeight * TEXT_AREA_HEIGHT_RATIO) / 2);
-      ctx.fillStyle = 'white';
-      ctx.font = `bold ${finalWidth * 0.06}px "Averia Serif Libre", serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('G.STUDIO', canvas.width / 2, textYPos);
-
-      // LANGKAH 7: UNDUH HASIL AKHIR
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: null,
+        width: rect.width, // Memastikan canvas dibuat dengan lebar yang benar
+        height: rect.height, // Memastikan canvas dibuat dengan tinggi yang benar
+      });
       const link = document.createElement('a');
       link.download = `photostrip-gstudio-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
       link.click();
-
+      document.body.removeChild(link);
     } catch (error) {
-      console.error('Terjadi kesalahan fatal saat membuat gambar:', error);
-      alert('Maaf, terjadi kesalahan yang tidak terduga saat mengunduh gambar.');
+      console.error('Error downloading photo strip:', error);
     } finally {
-      document.body.style.cursor = 'default';
+      document.body.removeChild(clone);
     }
   };
 
@@ -137,7 +82,6 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
 
       <div
         ref={stripRef}
-        id="photo-strip-preview"
         className="w-full max-w-sm mx-auto overflow-hidden"
         style={backgroundStyle}
       >
@@ -159,6 +103,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
             </div>
           ))}
         </div>
+
         <div className="text-center py-16">
           <p className="font-bold text-2xl text-white tracking-widest">
             G.STUDIO
