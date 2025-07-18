@@ -1,7 +1,5 @@
 import React, { useRef } from 'react';
-import { Download, Image as ImageIcon } from 'lucide-react';
-
-// Library eksternal tidak lagi digunakan untuk menggambar.
+import { Download, Image as ImageIcon, X } from 'lucide-react';
 
 interface Photo {
   id: string;
@@ -12,13 +10,14 @@ interface Photo {
 interface PhotoStripProps {
   photos: Photo[];
   background: string;
+  onDelete: (id: string) => void; // Prop baru untuk menghandle delete
 }
 
-const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
+const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background, onDelete }) => {
   const stripRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
 
-  // --- FUNGSI UNDUH BARU DENGAN LOGIKA 'OBJECT-FIT: COVER' YANG BENAR ---
+  // Fungsi download yang sudah terbukti berhasil
   const downloadPhotoStrip = async () => {
     const previewElement = stripRef.current;
     if (!previewElement || photos.length < 4) {
@@ -29,15 +28,13 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
     document.body.style.cursor = 'wait';
 
     try {
-      // 1. UKUR SEMUA ELEMEN DARI PRATINJAU SECARA PRESISI
       const previewRect = previewElement.getBoundingClientRect();
       const aspectRatio = previewRect.height / previewRect.width;
       const imageElements = Array.from(previewElement.querySelectorAll('img'));
       const textElement = textRef.current;
       if (!textElement || imageElements.length < 4) throw new Error("Elemen internal tidak ditemukan.");
 
-      // 2. BUAT KANVAS BARU DENGAN RESOLUSI TINGGI & PROPORSIONAL
-      const finalWidth = 1500; // Resolusi tinggi
+      const finalWidth = 1500;
       const finalHeight = finalWidth * aspectRatio;
 
       const canvas = document.createElement('canvas');
@@ -46,7 +43,6 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Gagal membuat kanvas.');
 
-      // 3. GAMBAR BACKGROUND
       if (background.startsWith('data:image')) {
         const bgImage = new Image();
         bgImage.crossOrigin = 'anonymous';
@@ -61,11 +57,9 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
         ctx.fillRect(0, 0, finalWidth, finalHeight);
       }
 
-      // 4. GAMBAR ULANG SETIAP FOTO DENGAN EFEK ZOOM (OBJECT-FIT: COVER)
       for (const imgEl of imageElements) {
         const imgRect = imgEl.getBoundingClientRect();
         
-        // Hitung posisi dan ukuran slot foto di kanvas final
         const slotX = (imgRect.left - previewRect.left) / previewRect.width * finalWidth;
         const slotY = (imgRect.top - previewRect.top) / previewRect.height * finalHeight;
         const slotWidth = imgRect.width / previewRect.width * finalWidth;
@@ -80,7 +74,6 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
           photoImg.src = imgEl.src;
         });
         
-        // Membuat area rounded
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(slotX + borderRadius, slotY);
@@ -95,27 +88,24 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
         ctx.closePath();
         ctx.clip();
         
-        // --- INI ADALAH LOGIKA 'OBJECT-FIT: COVER' YANG BENAR ---
         const slotAspectRatio = slotWidth / slotHeight;
         const imgAspectRatio = photoImg.width / photoImg.height;
         let sourceX = 0, sourceY = 0, sourceWidth = photoImg.width, sourceHeight = photoImg.height;
 
-        if (imgAspectRatio > slotAspectRatio) { // Gambar lebih lebar dari slot
+        if (imgAspectRatio > slotAspectRatio) {
           sourceWidth = photoImg.height * slotAspectRatio;
           sourceX = (photoImg.width - sourceWidth) / 2;
-        } else { // Gambar lebih tinggi dari slot
+        } else {
           sourceHeight = photoImg.width / slotAspectRatio;
           sourceY = (photoImg.height - sourceHeight) / 2;
         }
         
-        // Gambar bagian foto yang sudah di-zoom dan di-mirror
         ctx.translate(finalWidth, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(photoImg, sourceX, sourceY, sourceWidth, sourceHeight, finalWidth - slotX - slotWidth, slotY, slotWidth, slotHeight);
         ctx.restore();
       }
 
-      // 5. GAMBAR ULANG TEKS
       const textRect = textElement.getBoundingClientRect();
       const textStyle = getComputedStyle(textElement);
       const x = (textRect.left - previewRect.left + textRect.width / 2) / previewRect.width * finalWidth;
@@ -127,7 +117,6 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
       ctx.textBaseline = 'middle';
       ctx.fillText(textElement.innerText, x, y);
 
-      // 6. UNDUH HASIL AKHIR
       const link = document.createElement('a');
       link.download = `photostrip-gstudio-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png', 1.0);
@@ -169,14 +158,24 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
       >
         <div className="p-4 space-y-6">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index}>
+            <div key={photos[index]?.id || index} className="relative"> {/* Kunci unik dan posisi relatif */}
               {photos[index] ? (
-                <img
-                  src={photos[index].dataUrl}
-                  alt={`Photo ${index + 1}`}
-                  className="w-full aspect-[4/3] object-cover rounded-xl"
-                  style={{ transform: 'scaleX(-1)' }}
-                />
+                <>
+                  <img
+                    src={photos[index].dataUrl}
+                    alt={`Photo ${index + 1}`}
+                    className="w-full aspect-[4/3] object-cover rounded-xl"
+                    style={{ transform: 'scaleX(-1)' }}
+                  />
+                  {/* Tombol Hapus */}
+                  <button
+                    onClick={() => onDelete(photos[index].id)}
+                    className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1.5 hover:bg-red-500 transition-colors z-10"
+                    aria-label="Hapus foto"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </>
               ) : (
                 <div className="w-full aspect-[4/3] bg-black/10 rounded-xl flex items-center justify-center">
                   <ImageIcon className="w-8 h-8 text-black/20" />
@@ -185,6 +184,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ photos, background }) => {
             </div>
           ))}
         </div>
+
         <div className="text-center py-16">
           <p ref={textRef} className="font-bold text-2xl text-white tracking-widest">
             G.STUDIO

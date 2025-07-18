@@ -12,7 +12,6 @@ interface Photo {
 const PhotoBooth: React.FC = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [showCamera, setShowCamera] = useState(false);
-  // State diubah untuk menangani warna atau gambar
   const [background, setBackground] = useState<string>('#f5e6e0');
 
   const colors = [
@@ -41,6 +40,15 @@ const PhotoBooth: React.FC = () => {
     }
   };
 
+  // Fungsi untuk menghapus foto berdasarkan ID
+  const handleDeletePhoto = (id: string) => {
+    setPhotos(prevPhotos => prevPhotos.filter(photo => photo.id !== id));
+    // Jika kamera sedang tertutup dan ada slot kosong, buka kembali
+    if (!showCamera && photos.length <= 4) {
+        setShowCamera(true);
+    }
+  };
+
   const resetPhotos = () => {
     setPhotos([]);
   };
@@ -50,8 +58,7 @@ const PhotoBooth: React.FC = () => {
       setShowCamera(!showCamera);
     }
   };
-
-  // Fungsi baru untuk menangani upload gambar background
+  
   const handleBackgroundImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -68,21 +75,15 @@ const PhotoBooth: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-200 via-blue-300 to-purple-200">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-4">
-
             <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-900 via-indigo-800 to-purple-800 bg-clip-text text-transparent mt-8">
               G.STUDIO
             </h1>
           </div>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-
-          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Side - Controls */}
           <div className="space-y-6">
             {showCamera && photos.length < 4 && (
               <CameraComponent
@@ -91,7 +92,6 @@ const PhotoBooth: React.FC = () => {
               />
             )}
 
-            {/* Main Controls */}
             <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/50 p-6">
               <h2 className="text-xl font-semibold bg-gradient-to-r from-blue-900 to-indigo-800 bg-clip-text text-transparent mb-4">Kontrol Utama</h2>
               <div className="space-y-4">
@@ -101,7 +101,7 @@ const PhotoBooth: React.FC = () => {
                   className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-4 rounded-xl font-semibold transition-all transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg"
                 >
                   <Camera className="w-5 h-5" />
-                  {photos.length >= 4 ? 'Strip Selesai' : `Ambil Foto ${photos.length + 1}/4`}
+                  {photos.length >= 4 ? 'Strip Penuh' : `Ambil Foto ${photos.length + 1}/4`}
                 </button>
                 <button
                   onClick={resetPhotos}
@@ -114,13 +114,11 @@ const PhotoBooth: React.FC = () => {
               </div>
             </div>
 
-            {/* Background Picker */}
             <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/50 p-6">
               <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-900 to-indigo-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
                 <Palette2 className="w-5 h-5" />
                 Pilih Background
               </h3>
-              {/* Tombol Upload Gambar */}
               <input
                 type="file"
                 id="bg-upload"
@@ -153,11 +151,11 @@ const PhotoBooth: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Side - Photo Strip */}
           <div>
             <PhotoStrip
               photos={photos}
-              background={background} // Prop diubah menjadi `background`
+              background={background}
+              onDelete={handleDeletePhoto}
             />
           </div>
         </div>
@@ -173,7 +171,6 @@ const PhotoBooth: React.FC = () => {
               className="text-slate-500 hover:text-slate-800 transition-colors"
               aria-label="GitHub Profile"
             >
-              {/* Hanya sisakan baris ini di dalam tag <a> */}
               <Github className="w-6 h-6" />
             </a>
           </div>
