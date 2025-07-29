@@ -1,8 +1,7 @@
 📸 PhotoBooth Web
-Selamat datang di PhotoBooth Web! Sebuah aplikasi web sederhana dan menyenangkan yang mengubah browser Anda menjadi studio foto mini. Ambil foto langsung dari webcam Anda, tambahkan efek filter keren, dan simpan kenangan Anda.
+Welcome to PhotoBooth Web! A simple and fun web application that turns your browser into a mini photo studio. Take photos directly from your webcam, add cool filter effects, and save your memories.
 
-✨ Pratinjau Langsung
-Coba aplikasinya sekarang juga tanpa perlu instalasi!
+✨ Live Preview
+Try the application right now without any installation!
 
 ➡️ https://photo-booth-web.vercel.app/
-
