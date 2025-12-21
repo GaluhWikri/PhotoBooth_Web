@@ -104,21 +104,61 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
 
     if (!ctx) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Get the actual video dimensions
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
 
-    // Apply the selected filter to the context before drawing
+    // Get the displayed dimensions (parent container)
+    // We use the parent element because video object-cover fills it
+    const containerRect = video.parentElement?.getBoundingClientRect();
+    const containerWidth = containerRect?.width || videoWidth;
+    const containerHeight = containerRect?.height || videoHeight;
+
+    // Calculate aspect ratios
+    const videoAspect = videoWidth / videoHeight;
+    const containerAspect = containerWidth / containerHeight;
+
+    let renderWidth, renderHeight, offsetX, offsetY;
+
+    // Calculate crop exactly like object-cover
+    if (containerAspect > videoAspect) {
+      // Container is wider than video - crop top/bottom
+      renderWidth = videoWidth;
+      renderHeight = videoWidth / containerAspect;
+      offsetX = 0;
+      offsetY = (videoHeight - renderHeight) / 2;
+    } else {
+      // Container is taller than video - crop left/right
+      renderWidth = videoHeight * containerAspect;
+      renderHeight = videoHeight;
+      offsetX = (videoWidth - renderWidth) / 2;
+      offsetY = 0;
+    }
+
+    // Set canvas to match the rendered aspect ratio (or fixed size if desired, but ratio matters most)
+    // We'll set canvas size to the container's relative resolution to maintain high quality
+    canvas.width = renderWidth;
+    canvas.height = renderHeight;
+
+    // Apply filter
     ctx.filter = activeFilter.value;
 
     setIsFlashing(true);
 
-    // We need to mirror the image drawing to match the mirrored video preview
+    // Mirror logic: translate context to flip horizontally
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0);
-    ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
 
-    const photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    // Draw the cropped portion of the video
+    ctx.drawImage(
+      video,
+      offsetX, offsetY, renderWidth, renderHeight, // Source crop
+      0, 0, canvas.width, canvas.height        // Destination
+    );
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset
+
+    const photoDataUrl = canvas.toDataURL('image/jpeg', 0.9);
 
     setTimeout(() => setIsFlashing(false), 200);
     onCapture(photoDataUrl);
@@ -136,7 +176,7 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
           autoPlay
           playsInline
           muted
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover md:rounded-xl"
           style={{ transform: 'scaleX(-1)', filter: activeFilter.value }}
         />
 
