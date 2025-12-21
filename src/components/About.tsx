@@ -1,6 +1,6 @@
 import React from 'react';
 import Navbar from './Navbar';
-import { Camera, Heart, Users, Zap } from 'lucide-react';
+import { Camera, Heart, Shield, Users } from 'lucide-react';
 
 interface AboutProps {
     onNavigate: (page: string) => void;
@@ -11,50 +11,59 @@ const About: React.FC<AboutProps> = ({ onNavigate }) => {
         <div className="min-h-screen bg-[#F0F7FF] pb-20">
             <Navbar onNavigate={onNavigate} activePage="about" />
 
-            <div className="max-w-4xl mx-auto px-6 mt-12">
+            <div className="max-w-5xl mx-auto px-6 mt-12">
                 <div className="text-center mb-16">
-                    <h1 className="text-4xl md:text-5xl font-serif font-bold text-stone-900 mb-6">Capturing Moments, Creating Memories</h1>
-                    <p className="text-lg text-stone-600 max-w-2xl mx-auto leading-relaxed">
-                        Photobooth is a modern web experience designed to bring the fun of classic photo booths directly to your browser. No downloads, no fuss—just pure creativity.
+                    <h1 className="text-4xl font-serif font-bold text-stone-900 mb-4">About PhotoBooth</h1>
+                    <p className="text-stone-600 max-w-2xl mx-auto">
+                        Capturing moments, creating memories. We bring the fun of traditional photobooths to the digital world.
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8 mb-20">
-                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-blue-50 text-center">
-                        <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Camera className="w-7 h-7" />
+                {/* Features Grid */}
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+                    {[
+                        { icon: Camera, title: 'High Quality', desc: 'Crystal clear photo capture' },
+                        { icon: Users, title: 'Shareable', desc: 'Easy sharing with friends' },
+                        { icon: Heart, title: 'Made with Love', desc: 'Crafted for best experience' },
+                        { icon: Shield, title: 'Privacy First', desc: 'Your photos stay locally' },
+                    ].map((feature, i) => (
+                        <div key={i} className="bg-white p-6 rounded-3xl shadow-sm border border-stone-100 hover:shadow-md transition-all text-center group">
+                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                <feature.icon className="w-6 h-6" />
+                            </div>
+                            <h3 className="font-bold text-stone-800 mb-2">{feature.title}</h3>
+                            <p className="text-stone-500 text-sm">{feature.desc}</p>
                         </div>
-                        <h3 className="text-xl font-bold text-stone-800 mb-3">Instant Capture</h3>
-                        <p className="text-stone-500">High-quality captures straight from your webcam with zero latency.</p>
-                    </div>
-                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-purple-50 text-center">
-                        <div className="w-14 h-14 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Users className="w-7 h-7" />
-                        </div>
-                        <h3 className="text-xl font-bold text-stone-800 mb-3">So Many Filters</h3>
-                        <p className="text-stone-500">Choose from over 14+ custom filters to find your perfect vibe.</p>
-                    </div>
-                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-pink-50 text-center">
-                        <div className="w-14 h-14 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Heart className="w-7 h-7" />
-                        </div>
-                        <h3 className="text-xl font-bold text-stone-800 mb-3">Share the Love</h3>
-                        <p className="text-stone-500">Download your strips instantly and share them with the world.</p>
-                    </div>
+                    ))}
                 </div>
 
-                <div className="bg-white rounded-[3rem] overflow-hidden shadow-xl border border-stone-100 relative">
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-blue-600 to-indigo-600 opacity-90 z-10"></div>
-                    <img src="https://images.unsplash.com/photo-1520607162513-77705e685728?auto=format&fit=crop&q=80&w=1920" alt="Team" className="w-full h-96 object-cover" />
+                {/* Main Content */}
+                <div className="grid md:grid-cols-2 gap-12 items-center">
+                    <div className="space-y-6">
+                        <h2 className="text-3xl font-serif font-bold text-stone-900">Our Story</h2>
+                        <div className="space-y-4 text-stone-600 leading-relaxed">
+                            <p>
+                                Started as a passion project, PhotoBooth was created to bridge the gap between physical memory-making and digital convenience. We wanted to recreate that feeling of squeezing into a booth with friends, making silly faces, and waiting for the strip to print.
+                            </p>
+                            <p>
+                                Our application provides a seamless, browser-based photobooth experience without the need for expensive equipment or software installation. Just allow camera access, and you're ready to snap!
+                            </p>
+                        </div>
+                    </div>
 
-                    <div className="absolute top-0 left-0 w-full h-full z-20 flex flex-col items-center justify-center text-center px-6">
-                        <h2 className="text-3xl font-bold text-white mb-4">Built with ❤️ by Galuh Wikri</h2>
-                        <p className="text-blue-100 text-lg mb-8 max-w-lg">
-                            This project explores the intersection of modern web capabilities and nostalgic user experiences.
-                        </p>
-                        <a href="https://github.com/GaluhWikri" target="_blank" rel="noopener noreferrer" className="px-8 py-3 bg-white text-blue-600 rounded-full font-bold hover:bg-blue-50 transition-colors shadow-lg">
-                            Visit GitHub
-                        </a>
+                    <div className="relative">
+                        <div className="absolute -inset-4 bg-gradient-to-tr from-blue-200 to-pink-200 rounded-[2.5rem] rotate-3 blur-lg opacity-60"></div>
+                        <div className="relative bg-white p-8 rounded-[2rem] shadow-xl border border-stone-100">
+                            <div className="aspect-[4/3] bg-stone-100 rounded-2xl overflow-hidden mb-6 relative group">
+                                <div className="absolute inset-0 flex items-center justify-center text-stone-400">
+                                    <Camera className="w-16 h-16 opacity-50" />
+                                </div>
+                            </div>
+                            <div className="flex gap-4">
+                                <div className="h-4 w-1/3 bg-stone-100 rounded-full"></div>
+                                <div className="h-4 w-1/3 bg-stone-100 rounded-full"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -145,18 +145,12 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
 
     setIsFlashing(true);
 
-    // Mirror logic: translate context to flip horizontally
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-
-    // Draw the cropped portion of the video
+    // Draw the cropped portion of the video WITHOUT mirroring (PhotoStrip handles mirroring)
     ctx.drawImage(
       video,
       offsetX, offsetY, renderWidth, renderHeight, // Source crop
       0, 0, canvas.width, canvas.height        // Destination
     );
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset
 
     const photoDataUrl = canvas.toDataURL('image/jpeg', 0.9);
 
@@ -170,13 +164,13 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
         {/* Header placeholder kept for layout stability if needed, hidden now */}
       </div>
 
-      <div className="relative flex-grow flex items-center justify-center overflow-hidden bg-black">
+      <div className="relative flex-grow flex items-center justify-center overflow-hidden bg-black aspect-[3/2] w-full">
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          className="w-full h-full object-cover md:rounded-xl"
+          className="w-full h-full object-cover"
           style={{ transform: 'scaleX(-1)', filter: activeFilter.value }}
         />
 
