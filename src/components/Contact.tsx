@@ -1,6 +1,6 @@
 import React from 'react';
 import Navbar from './Navbar';
-import { Mail, MapPin, Send } from 'lucide-react';
+import { Mail, MapPin, Send, Instagram } from 'lucide-react';
 
 interface ContactProps {
     onNavigate: (page: string) => void;
@@ -27,6 +27,10 @@ const Contact: React.FC<ContactProps> = ({ onNavigate }) => {
                                     <div className="flex items-center gap-4">
                                         <Mail className="w-6 h-6 opacity-70" />
                                         <span>galuhwikri05@gmail.com</span>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <Instagram className="w-6 h-6 opacity-70" />
+                                        <a href="https://instagram.com/galuh.wikri" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-white transition-colors">@galuh.wikri</a>
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <MapPin className="w-6 h-6 opacity-70" />

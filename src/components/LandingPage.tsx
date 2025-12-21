@@ -75,7 +75,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
             </div>
 
             <div className="absolute bottom-4 left-0 w-full text-center text-[15px] text-stone-700/50">
-                Follow me on instagram @galuh.wikri
+                Follow me on instagram <a href="https://instagram.com/galuh.wikri" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-pink-600 transition-colors">@galuh.wikri</a>
             </div>
 
         </div>
