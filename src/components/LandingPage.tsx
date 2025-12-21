@@ -74,8 +74,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
                 </div>
             </div>
 
-            <div className="absolute bottom-4 left-0 w-full text-center text-[10px] text-stone-400/50">
-                Follow us on instagram @galuh.wikri
+            <div className="absolute bottom-4 left-0 w-full text-center text-[15px] text-stone-700/50">
+                Follow me on instagram @galuh.wikri
             </div>
 
         </div>
