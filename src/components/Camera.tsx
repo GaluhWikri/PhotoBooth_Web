@@ -1,10 +1,27 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Camera, X, Zap } from 'lucide-react';
+import { Camera, X, Zap, MoreHorizontal, Sparkles } from 'lucide-react';
 
 interface CameraProps {
   onCapture: (photoDataUrl: string) => void;
   onClose: () => void;
 }
+
+const filters = [
+  { name: 'Normal', value: 'none' },
+  { name: 'Vintage', value: 'sepia(0.4) contrast(1.2) brightness(0.9)' },
+  { name: 'Grayscale', value: 'grayscale(1)' },
+  { name: 'Smooth', value: 'contrast(0.9) brightness(1.1) blur(0.5px)' },
+  { name: 'B&W', value: 'grayscale(1) contrast(1.2)' },
+  { name: 'Cyber', value: 'saturate(2) hue-rotate(180deg) contrast(1.1)' },
+  { name: 'Bittersweet', value: 'contrast(1.1) brightness(1.1) sepia(0.3) saturate(1.5)' },
+  { name: 'OG Vintage', value: 'sepia(0.6) contrast(1.3) brightness(0.8)' },
+  { name: 'Fresh', value: 'brightness(1.1) contrast(1.1) saturate(1.2)' },
+  { name: 'Citrus', value: 'sepia(0.3) saturate(2) hue-rotate(20deg)' },
+  { name: '2015', value: 'sepia(0.2) contrast(1.1) saturate(1.1)' },
+  { name: 'Focus', value: 'contrast(1.2) brightness(1.1)' },
+  { name: 'Candy', value: 'brightness(1.1) saturate(1.5) hue-rotate(-10deg)' },
+  { name: '80s', value: 'contrast(1.1) brightness(1.1) saturate(1.5) sepia(0.2)' },
+];
 
 const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -13,6 +30,9 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
   const [isFlashing, setIsFlashing] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isCountingDown, setIsCountingDown] = useState(false);
+  const [activeFilter, setActiveFilter] = useState(filters[0]);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showFilterSelector, setShowFilterSelector] = useState(false);
 
   useEffect(() => {
     startCamera();
@@ -38,14 +58,14 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
+        video: {
           aspectRatio: 4 / 3,
           facingMode: 'user'
         }
       });
-      
+
       setStream(mediaStream);
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
@@ -87,76 +107,138 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
+    // Apply the selected filter to the context before drawing
+    ctx.filter = activeFilter.value;
+
     setIsFlashing(true);
+
+    // We need to mirror the image drawing to match the mirrored video preview
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0);
-    
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+
     const photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-    
+
     setTimeout(() => setIsFlashing(false), 200);
     onCapture(photoDataUrl);
   };
 
   return (
-    <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/50 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-900 to-indigo-800 bg-clip-text text-transparent flex items-center gap-2">
-          <Camera className="w-5 h-5" />
-          Kamera
-        </h3>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-200 rounded-lg transition-all"
-        >
-          <X className="w-5 h-5" />
-        </button>
+    <div className="relative w-full h-full bg-black flex flex-col">
+      <div className="flex items-center justify-between absolute top-4 left-4 right-4 z-10 opacity-0 pointer-events-none">
+        {/* Header placeholder kept for layout stability if needed, hidden now */}
       </div>
 
-      <div className="relative">
+      <div className="relative flex-grow flex items-center justify-center overflow-hidden bg-black">
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          className="w-full aspect-[4/3] bg-gradient-to-br from-gray-900 to-black rounded-xl object-cover shadow-inner"
-          style={{ transform: 'scaleX(-1)' }}
+          className="w-full h-full object-cover"
+          style={{ transform: 'scaleX(-1)', filter: activeFilter.value }}
         />
-        
+
         {isFlashing && (
-          <div className="absolute inset-0 bg-white rounded-xl opacity-70 pointer-events-none" />
+          <div className="absolute inset-0 bg-white opacity-70 pointer-events-none transition-opacity duration-200" />
         )}
-        
-        {/* --- PERUBAHAN DI SINI --- */}
+
         {countdown !== null && (
-          // Menghapus class background dan backdrop-blur
-          <div className="absolute inset-0 rounded-xl flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
             <div className="text-center">
-              <div className="text-6xl font-bold bg-gradient-to-r from-white via-blue-200 to-indigo-200 bg-clip-text text-transparent mb-2 animate-pulse drop-shadow-lg">
+              <div className="text-8xl font-bold text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] animate-pulse">
                 {countdown}
               </div>
-              <p className="text-white text-lg drop-shadow-md">Bersiap-siap...</p>
             </div>
           </div>
         )}
-        
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-6">
+          {/* Capture Button */}
           <button
             onClick={startCountdown}
             disabled={isCountingDown}
-            className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 disabled:from-gray-400 disabled:to-gray-500 disabled:opacity-50 text-white px-6 py-3 rounded-full font-semibold transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 shadow-xl disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="group relative flex items-center justify-center w-16 h-16 rounded-full bg-white border-4 border-gray-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-transform hover:scale-105 active:scale-95"
           >
-            <Zap className="w-5 h-5" />
-            Ambil Foto
+            <span className="w-12 h-12 rounded-full bg-red-500 group-hover:bg-red-600 transition-colors"></span>
+          </button>
+
+          {/* Filter Toggle Button */}
+          <button
+            onClick={() => setShowFilterSelector(!showFilterSelector)}
+            className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md border border-white/30 shadow-lg transition-all ${showFilterSelector ? 'bg-white text-blue-600' : 'bg-black/30 text-white hover:bg-white/20'}`}
+            title="Filters"
+          >
+            <Sparkles className="w-5 h-5" />
           </button>
         </div>
       </div>
 
+      {/* Floating Filter Selector (Pill Style) */}
+      {showFilterSelector && !showFilterModal && (
+        <div className="absolute bottom-28 left-1/2 transform -translate-x-1/2 z-30 animate-in slide-in-from-bottom-5 duration-200">
+          <div className="bg-white/20 backdrop-blur-md border border-white/30 rounded-full p-2 flex items-center gap-3 shadow-lg">
+            {filters.slice(0, 5).map((filter) => (
+              <button
+                key={filter.name}
+                onClick={() => setActiveFilter(filter)}
+                className={`relative w-10 h-10 rounded-full overflow-hidden border-2 transition-transform hover:scale-110 ${activeFilter.name === filter.name ? 'border-blue-500 scale-110 ring-2 ring-blue-500/50' : 'border-white'
+                  }`}
+                title={filter.name}
+              >
+                <img
+                  src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80"
+                  alt={filter.name}
+                  className="w-full h-full object-cover"
+                  style={{ filter: filter.value }}
+                />
+              </button>
+            ))}
+
+            <div className="w-px h-6 bg-white/30 mx-1"></div>
+
+            <button
+              onClick={() => setShowFilterModal(true)}
+              className="w-10 h-10 rounded-full bg-pink-500 text-white flex items-center justify-center shadow-lg hover:bg-pink-600 transition-colors"
+            >
+              <MoreHorizontal className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm p-6 flex flex-col animate-in fade-in duration-200 rounded-3xl">
+          <div className="flex justify-between items-center mb-6 text-white">
+            <h3 className="text-xl font-bold">All Filters</h3>
+            <button onClick={() => setShowFilterModal(false)} className="p-2 bg-white/10 rounded-full hover:bg-white/20"><X className="w-5 h-5" /></button>
+          </div>
+
+          <div className="grid grid-cols-4 gap-4 overflow-y-auto pb-4 scrollbar-hide">
+            {filters.map((filter) => (
+              <button
+                key={filter.name}
+                onClick={() => { setActiveFilter(filter); setShowFilterModal(false); }}
+                className="flex flex-col items-center gap-2 group"
+              >
+                <div className={`w-16 h-16 rounded-full overflow-hidden border-2 transition-all group-hover:scale-105 ${activeFilter.name === filter.name ? 'border-blue-500 ring-2 ring-blue-500/50' : 'border-transparent'}`}>
+                  <img
+                    src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80"
+                    alt={filter.name}
+                    className="w-full h-full object-cover"
+                    style={{ filter: filter.value }}
+                  />
+                </div>
+                <span className={`text-xs font-medium ${activeFilter.name === filter.name ? 'text-blue-400' : 'text-white/80'}`}>{filter.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <canvas ref={canvasRef} className="hidden" />
-      
-      <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-        <p className="text-blue-800 text-sm text-center font-medium">
-          💡 Klik "Ambil Foto" untuk memulai timer 5 detik
-        </p>
-      </div>
     </div>
   );
 };

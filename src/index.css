@@ -7,7 +7,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -20,7 +21,8 @@ html, body {
 }
 
 /* Smooth transitions */
-button, .photo-slot {
+button,
+.photo-slot {
   transition: all 0.2s ease-out;
 }
 
@@ -35,8 +37,60 @@ button, .photo-slot {
 }
 
 /* Better mobile responsiveness */
-@media (max-width: 768px) {
-  .camera-container video {
-    height: 200px;
+.camera-container video {
+  height: 200px;
+}
+
+/* Custom Animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px) rotate(-6deg);
   }
+
+  50% {
+    transform: translateY(-20px) rotate(-6deg);
+  }
+
+  100% {
+    transform: translateY(0px) rotate(-6deg);
+  }
+}
+
+@keyframes float-right {
+  0% {
+    transform: translateY(0px) rotate(6deg);
+  }
+
+  50% {
+    transform: translateY(-20px) rotate(6deg);
+  }
+
+  100% {
+    transform: translateY(0px) rotate(6deg);
+  }
+}
+
+.animate-float-slow {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-right 7s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out forwards;
 }

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Camera, RotateCcw, Palette as Palette2, Upload, Github, Sticker } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Camera, RotateCcw, Palette as Palette2, Upload, Github, Sticker, ArrowLeft, Download, X } from 'lucide-react';
 import CameraComponent from './Camera';
-import PhotoStrip, { StickerObject } from './PhotoStrip';
+import PhotoStrip, { StickerObject, PhotoStripHandle } from './PhotoStrip';
+import LandingPage from './LandingPage';
+import Navbar from './Navbar';
 
 interface Photo {
   id: string;
@@ -15,11 +17,16 @@ const availableStickers = Object.keys(stickerModules)
   .map(path => path.split('/').pop())
   .filter((name): name is string => typeof name === 'string');
 
-const PhotoBooth: React.FC = () => {
+import About from './About';
+import PrivacyPolicy from './PrivacyPolicy';
+import Contact from './Contact';
+
+const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavigate }) => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [showCamera, setShowCamera] = useState(false);
   const [background, setBackground] = useState<string>('#948979');
   const [activeStickers, setActiveStickers] = useState<StickerObject[]>([]);
+  const stripRef = useRef<PhotoStripHandle>(null);
 
   const colors = [
     { name: 'pink', value: '#948979' }, { name: 'Navy Blue', value: '#1E3E62' },
@@ -48,6 +55,12 @@ const PhotoBooth: React.FC = () => {
 
   const toggleCamera = () => {
     if (photos.length < 4) setShowCamera(!showCamera);
+  };
+
+  const handleDownload = () => {
+    if (stripRef.current) {
+      stripRef.current.download();
+    }
   };
 
   const handleBackgroundImage = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,118 +96,187 @@ const PhotoBooth: React.FC = () => {
     setActiveStickers(prev => prev.filter(s => s.id !== id));
   };
 
+  // Load Paper Textures
+  const paperModules = import.meta.glob('/public/paper/*.jpeg', { eager: true });
+  const paperTextures = Object.keys(paperModules).map(path => {
+    const fileName = path.split('/').pop();
+    return {
+      name: fileName || 'Paper',
+      value: `/paper/${fileName}`
+    };
+  });
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-200 via-blue-300 to-purple-200">
-      <div className="max-w-6xl mx-auto p-4">
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-900 via-indigo-800 to-purple-800 bg-clip-text text-transparent mt-8">
-            G.STUDIO
-          </h1>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            {showCamera && photos.length < 4 && (
-              <CameraComponent onCapture={handlePhotoCapture} onClose={() => setShowCamera(false)} />
-            )}
-            <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/50 p-6">
-              <h2 className="text-xl font-semibold bg-gradient-to-r from-blue-900 to-indigo-800 bg-clip-text text-transparent mb-4">Kontrol Utama</h2>
-              <div className="space-y-4">
-                <button
-                  onClick={toggleCamera}
-                  disabled={photos.length >= 4}
-                  className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-4 rounded-xl font-semibold transition-all transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg"
-                >
-                  <Camera className="w-5 h-5" />
-                  {photos.length >= 4 ? 'Strip Penuh' : `Ambil Foto ${photos.length + 1}/4`}
-                </button>
-                <button
-                  onClick={resetPhotos}
-                  disabled={photos.length === 0 && activeStickers.length === 0}
-                  className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-4 rounded-xl font-semibold transition-all transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg"
-                >
-                  <RotateCcw className="w-5 h-5" />
-                  Reset Semua
-                </button>
+    <div className="min-h-screen bg-[#F0F7FF] pb-10">
+      {/* Navbar with Home Link acting as Back button */}
+      <Navbar onNavigate={onNavigate} activePage="booth" />
+
+      <div className="max-w-6xl mx-auto px-4">
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mt-12">
+
+          {/* Left Column: Preview (Width 5/12) */}
+          <div className="lg:col-span-5 order-1 lg:order-1">
+            <div className="sticky top-24 flex flex-col items-center">
+              <div className="relative transform transition-all duration-300 hover:scale-[1.02] shadow-2xl rounded-sm overflow-hidden border-[6px] border-white w-[220px]">
+                <PhotoStrip
+                  ref={stripRef}
+                  photos={photos}
+                  background={background}
+                  onDeletePhoto={handleDeletePhoto}
+                  stickers={activeStickers}
+                  onUpdateSticker={updateSticker}
+                  onDeleteSticker={deleteSticker}
+                />
               </div>
+              {/* Action Buttons below preview similar to reference */}
+              <div className="mt-8 flex gap-4 w-full justify-center">
+                <button
+                  onClick={handleDownload}
+                  disabled={photos.length < 4}
+                  className="px-6 py-2 rounded-full bg-pink-500 text-white font-semibold hover:bg-pink-600 transition-colors shadow-md disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" /> Download
+                </button>
+                <button onClick={resetPhotos} className="px-6 py-2 rounded-full bg-red-100 text-red-500 font-semibold hover:bg-red-200 transition-colors">
+                  Retake
+                </button>
+                {/* Share/Download are handled in PhotoStrip mostly or can be added here if needed, but keeping simple for now */}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Controls (Width 7/12) */}
+          <div className="lg:col-span-7 order-2 lg:order-2 space-y-8">
+
+            <h2 className="text-3xl font-serif text-stone-800 text-center lg:text-left mb-8">Customize Your Photo</h2>
+
+            {/* Camera Section */}
+            <div>
+              {showCamera && photos.length < 4 ? (
+                <div className="relative bg-black rounded-[2.5rem] overflow-hidden shadow-2xl mx-auto max-w-xl ring-8 ring-white/50">
+                  {/* Floating Glass Header */}
+                  <div className="absolute top-0 left-0 right-0 p-6 z-20 flex justify-between items-start pointer-events-none">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white text-sm font-medium pointer-events-auto">
+                      <span className="relative flex h-2.5 w-2.5 mr-1">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                      </span>
+                      Live Camera
+                    </div>
+                    <button
+                      onClick={() => setShowCamera(false)}
+                      className="w-10 h-10 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white hover:bg-white hover:text-black transition-all pointer-events-auto"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <CameraComponent onCapture={handlePhotoCapture} onClose={() => setShowCamera(false)} />
+                </div>
+              ) : (
+                <div className="text-center lg:text-left mb-8">
+                  <button
+                    onClick={toggleCamera}
+                    disabled={photos.length >= 4}
+                    className="inline-flex items-center gap-3 bg-stone-800 hover:bg-black text-white px-8 py-4 rounded-full font-bold shadow-lg transition-all hover:scale-105 active:scale-95 disabled:bg-stone-300 disabled:cursor-not-allowed"
+                  >
+                    <Camera className="w-5 h-5" />
+                    {photos.length >= 4 ? 'Photo Strip Ready' : `Take Photos (${photos.length}/4)`}
+                  </button>
+                  <p className="mt-3 text-stone-400 text-sm pl-2">Click to start the camera sequence</p>
+                </div>
+              )}
             </div>
 
-            {/* BAGIAN YANG HILANG, SEKARANG SUDAH ADA KEMBALI */}
-            <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/50 p-6">
-              <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-900 to-indigo-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-                <Palette2 className="w-5 h-5" />
-                Pilih Background
-              </h3>
-              <input
-                type="file"
-                id="bg-upload"
-                className="hidden"
-                accept="image/*"
-                onChange={handleBackgroundImage}
-              />
-              <label
-                htmlFor="bg-upload"
-                className="w-full cursor-pointer flex items-center justify-center gap-3 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-black text-white px-6 py-3 rounded-xl font-semibold transition-all mb-4"
-              >
-                <Upload className="w-5 h-5" />
-                Upload background
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                {colors.map((color) => (
-                  <button
-                    key={color.value}
-                    onClick={() => setBackground(color.value)}
-                    className={`w-full h-12 rounded-lg border-2 transition-all ${background === color.value ? 'border-blue-800 scale-105 ring-2 ring-blue-200' : 'border-gray-300 hover:border-gray-400'}`}
-                    style={{ backgroundColor: color.value }}
-                    title={color.name}
-                  />
-                ))}
+            {/* Customization Controls */}
+            <div className="space-y-8">
+
+              {/* Background Templates */}
+              <div>
+                <h3 className="text-lg font-medium text-stone-700 mb-4">Templates & Colors:</h3>
+                <div className="grid grid-cols-6 sm:grid-cols-8 gap-3">
+                  <label
+                    className="w-full aspect-square rounded-full border-2 border-dashed border-stone-300 flex items-center justify-center text-stone-400 hover:text-blue-500 hover:border-blue-500 cursor-pointer transition-colors bg-white"
+                    title="Upload Custom"
+                  >
+                    <Upload className="w-5 h-5" />
+                    <input type="file" className="hidden" accept="image/*" onChange={handleBackgroundImage} />
+                  </label>
+                  {colors.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => setBackground(color.value)}
+                      className={`w-full aspect-square rounded-full shadow-sm transition-transform hover:scale-110 ${background === color.value ? 'ring-2 ring-offset-2 ring-stone-800 scale-110' : ''}`}
+                      style={{ backgroundColor: color.value }}
+                      title={color.name}
+                    />
+                  ))}
+                  {/* Paper Textures */}
+                  {paperTextures.map((paper) => (
+                    <button
+                      key={paper.value}
+                      onClick={() => setBackground(paper.value)}
+                      className={`w-full aspect-square rounded-full shadow-sm transition-transform hover:scale-110 bg-cover bg-center ${background === paper.value ? 'ring-2 ring-offset-2 ring-stone-800 scale-110' : ''}`}
+                      style={{ backgroundImage: `url(${paper.value})` }}
+                      title={paper.name}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-            
-            <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/50 p-6">
-              <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-900 to-indigo-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-                <Sticker className="w-5 h-5" />
-                Pilih Stiker
-              </h3>
-              <div className="grid grid-cols-4 gap-3 max-h-80 overflow-y-auto">
-                {availableStickers.map(sticker => (
-                  <button key={sticker} onClick={() => addSticker(sticker)} className="bg-white/50 p-2 rounded-lg aspect-square hover:scale-110 transition-transform focus:ring-2 focus:ring-blue-500">
-                    <img src={`/stickers/${sticker}`} alt={sticker} className="w-full h-full object-contain" />
-                  </button>
-                ))}
+
+              {/* Stickers */}
+              <div className="bg-white/50 rounded-3xl p-6 border border-white/60">
+                <h3 className="text-lg font-medium text-stone-700 mb-4 flex items-center gap-2">
+                  <Sticker className="w-5 h-5" /> Add Stickers
+                </h3>
+                <div className="grid grid-cols-6 sm:grid-cols-8 gap-3 max-h-60 overflow-y-auto custom-scrollbar p-1">
+                  {availableStickers.map(sticker => (
+                    <button key={sticker} onClick={() => addSticker(sticker)} className="bg-white p-2 rounded-xl shadow-sm border border-stone-100 hover:border-blue-300 hover:shadow-md transition-all hover:-translate-y-1">
+                      <img src={`/stickers/${sticker}`} alt={sticker} className="w-full h-full object-contain pointer-events-none" />
+                    </button>
+                  ))}
+                </div>
               </div>
+
             </div>
           </div>
-          <div>
-            <PhotoStrip
-              photos={photos}
-              background={background}
-              onDeletePhoto={handleDeletePhoto}
-              stickers={activeStickers}
-              onUpdateSticker={updateSticker}
-              onDeleteSticker={deleteSticker}
-            />
-          </div>
+
         </div>
-        
-        <footer className="text-center py-8 mt-8">
-          <div className="flex items-center justify-center gap-4">
-            <p className="text-slate-600 font-semibold">
-              Made with love © 2025 by Galuh Wikri Ramadhan
-            </p>
-            <a
-              href="https://github.com/GaluhWikri/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-500 hover:text-slate-800 transition-colors"
-              aria-label="GitHub Profile"
-            >
-              <Github className="w-6 h-6" />
-            </a>
-          </div>
-        </footer>
+
       </div>
     </div>
+  );
+};
+
+const PhotoBooth: React.FC = () => {
+  const [currentPage, setCurrentPage] = useState('landing');
+
+  const navigate = (page: string) => {
+    setCurrentPage(page);
+    window.scrollTo(0, 0);
+  };
+
+  return (
+    <>
+      {currentPage === 'landing' && (
+        <LandingPage
+          onStart={() => navigate('booth')}
+          onNavigate={navigate}
+        />
+      )}
+      {currentPage === 'booth' && (
+        <BoothContent onNavigate={navigate} />
+      )}
+      {currentPage === 'about' && (
+        <About onNavigate={navigate} />
+      )}
+      {currentPage === 'privacy' && (
+        <PrivacyPolicy onNavigate={navigate} />
+      )}
+      {currentPage === 'contact' && (
+        <Contact onNavigate={navigate} />
+      )}
+    </>
   );
 };
 
