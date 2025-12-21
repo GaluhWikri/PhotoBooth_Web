@@ -30,7 +30,7 @@ const Contact: React.FC<ContactProps> = ({ onNavigate }) => {
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <MapPin className="w-6 h-6 opacity-70" />
-                                        <span>bandung, Indonesia</span>
+                                        <span>Bandung, Indonesia</span>
                                     </div>
                                 </div>
                             </div>
