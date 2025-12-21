@@ -32,7 +32,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
     { name: 'pink', value: '#948979' }, { name: 'Navy Blue', value: '#1E3E62' },
     { name: 'Blueberry', value: '#52A5CE' }, { name: 'FORREST', value: '#2B2B23' },
     { name: 'olive green', value: '#AFAB23' }, { name: 'Dry earth', value: '#876029' },
-    { name: 'butter yellow', value: '#EFCE7B' }, { name: 'BLOOD orangge', value: '#EF6F4C' },
+    { name: 'BLOOD orangge', value: '#EF6F4C' },
   ];
 
   const handlePhotoCapture = (photoDataUrl: string) => {
