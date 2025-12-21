@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, RotateCcw, Palette as Palette2, Upload, Github, Sticker, ArrowLeft, Download, X } from 'lucide-react';
+import { Camera, RotateCcw, Palette as Palette2, Upload, Github, Sticker, ArrowLeft, Download, X, ImageIcon } from 'lucide-react';
 import CameraComponent from './Camera';
 import PhotoStrip, { StickerObject, PhotoStripHandle } from './PhotoStrip';
 import LandingPage from './LandingPage';
@@ -74,6 +74,21 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
     }
   };
 
+  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && photos.length < 4) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (typeof e.target?.result === 'string') {
+          handlePhotoCapture(e.target.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset file input
+    event.target.value = '';
+  };
+
   const addSticker = (stickerSrc: string) => {
     const newSticker: StickerObject = {
       id: `sticker_${Date.now()}`,
@@ -134,7 +149,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
                 <button
                   onClick={handleDownload}
                   disabled={photos.length < 4}
-                  className="px-6 py-2 rounded-full bg-pink-500 text-white font-semibold hover:bg-pink-600 transition-colors shadow-md disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-6 py-2 rounded-full bg-blue-400 text-white font-semibold hover:bg-blue-500 transition-colors shadow-md disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <Download className="w-4 h-4" /> Download
                 </button>
@@ -187,6 +202,18 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
                 </div>
               )}
             </div>
+
+            {/* Upload Logic */}
+            {!showCamera && photos.length < 4 && (
+              <div className="text-center lg:text-left mb-8 -mt-6">
+                <p className="text-sm text-stone-500 mb-2">Or upload existing photos</p>
+                <label className="inline-flex items-center gap-3 bg-white text-stone-700 border border-stone-200 hover:bg-stone-50 px-6 py-3 rounded-full font-medium shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer">
+                  <ImageIcon className="w-5 h-5" />
+                  <span>Upload Photo</span>
+                  <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+                </label>
+              </div>
+            )}
 
             {/* Customization Controls */}
             <div className="space-y-8">

@@ -1,6 +1,6 @@
 import React from 'react';
 import Navbar from './Navbar';
-import { Mail, MapPin, Phone, Send } from 'lucide-react';
+import { Mail, MapPin, Send } from 'lucide-react';
 
 interface ContactProps {
     onNavigate: (page: string) => void;

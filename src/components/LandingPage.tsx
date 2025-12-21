@@ -12,7 +12,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
         <div className="min-h-screen relative overflow-hidden bg-[#F0F7FF] text-stone-800 font-sans selection:bg-blue-200">
 
             {/* Background Gradients */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] md:w-[900px] md:h-[900px] bg-blue-300/20 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] md:w-[1200px] md:h-[600px] bg-blue-600/50 rounded-full blur-[100px] pointer-events-none animate-breathe" />
 
             {/* Navbar */}
             <Navbar onNavigate={onNavigate} activePage="landing" />
@@ -23,12 +23,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
 
                 {/* Main Title Area */}
                 <div className="relative mb-6">
-                    <span className="absolute -left-24 top-1/2 -translate-y-1/2 text-sm font-semibold tracking-[0.2em] text-stone-400 hidden lg:block">EST</span>
+                    <span className="absolute -left-24 top-1/2 -translate-y-1/2 text-sm font-semibold tracking-[0.2em] text-stone-1000 hidden lg:block">EST</span>
                     <h1 className="text-6xl md:text-8xl lg:text-9xl font-serif text-stone-900 tracking-[-0.02em]">photobooth</h1>
-                    <span className="absolute -right-24 top-1/2 -translate-y-1/2 text-sm font-semibold tracking-[0.2em] text-stone-400 hidden lg:block">2025</span>
+                    <span className="absolute -right-24 top-1/2 -translate-y-1/2 text-sm font-semibold tracking-[0.2em] text-stone-1000 hidden lg:block">2025</span>
                 </div>
 
-                <p className="text-stone-500 max-w-md mx-auto mb-12 text-sm md:text-base font-medium leading-relaxed">
+                <p className="text-stone-900 max-w-md mx-auto mb-12 text-sm md:text-base font-medium leading-relaxed">
                     Capture the moment, cherish the magic,<br /> relive the love
                 </p>
 

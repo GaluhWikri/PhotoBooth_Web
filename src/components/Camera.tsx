@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Camera, X, Zap, MoreHorizontal, Sparkles } from 'lucide-react';
+import { Camera, X, Zap, MoreHorizontal, Sparkles, Timer } from 'lucide-react';
 
 interface CameraProps {
   onCapture: (photoDataUrl: string) => void;
@@ -33,6 +33,7 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
   const [activeFilter, setActiveFilter] = useState(filters[0]);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showFilterSelector, setShowFilterSelector] = useState(false);
+  const [timerDuration, setTimerDuration] = useState(3);
 
   useEffect(() => {
     startCamera();
@@ -92,7 +93,7 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
 
   const startCountdown = () => {
     setIsCountingDown(true);
-    setCountdown(5);
+    setCountdown(timerDuration);
   };
 
   const takePhotoNow = () => {
@@ -188,24 +189,44 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
           </div>
         )}
 
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-6">
-          {/* Capture Button */}
-          <button
-            onClick={startCountdown}
-            disabled={isCountingDown}
-            className="group relative flex items-center justify-center w-16 h-16 rounded-full bg-white border-4 border-gray-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-transform hover:scale-105 active:scale-95"
-          >
-            <span className="w-12 h-12 rounded-full bg-red-500 group-hover:bg-red-600 transition-colors"></span>
-          </button>
+        <div className="absolute bottom-6 w-full px-6 flex items-center justify-between z-20">
 
-          {/* Filter Toggle Button */}
-          <button
-            onClick={() => setShowFilterSelector(!showFilterSelector)}
-            className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md border border-white/30 shadow-lg transition-all ${showFilterSelector ? 'bg-white text-blue-600' : 'bg-black/30 text-white hover:bg-white/20'}`}
-            title="Filters"
-          >
-            <Sparkles className="w-5 h-5" />
-          </button>
+          {/* Timer Selector (Left) */}
+          <div className={`flex-1 flex justify-start transition-opacity duration-300 ${isCountingDown ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+            <div className="flex bg-black/40 backdrop-blur-md rounded-full p-1 border border-white/20">
+              {[3, 5, 10].map(time => (
+                <button
+                  key={time}
+                  onClick={() => setTimerDuration(time)}
+                  className={`w-8 h-8 rounded-full text-xs font-bold transition-all ${timerDuration === time ? 'bg-white text-black' : 'text-white hover:bg-white/20'}`}
+                >
+                  {time}s
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Capture Button (Center) */}
+          <div className={`flex justify-center transition-all duration-300 ${isCountingDown ? 'scale-75 opacity-50' : 'scale-100 opacity-100'}`}>
+            <button
+              onClick={startCountdown}
+              disabled={isCountingDown}
+              className="group relative flex items-center justify-center w-16 h-16 rounded-full bg-white border-4 border-gray-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-transform hover:scale-105 active:scale-95"
+            >
+              <span className="w-12 h-12 rounded-full bg-red-500 group-hover:bg-red-600 transition-colors"></span>
+            </button>
+          </div>
+
+          {/* Filter Toggle Button (Right) */}
+          <div className={`flex-1 flex justify-end transition-opacity duration-300 ${isCountingDown ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+            <button
+              onClick={() => setShowFilterSelector(!showFilterSelector)}
+              className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md border border-white/30 shadow-lg transition-all ${showFilterSelector ? 'bg-white text-blue-600' : 'bg-black/30 text-white hover:bg-white/20'}`}
+              title="Filters"
+            >
+              <Sparkles className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
