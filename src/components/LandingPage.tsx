@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Navbar from './Navbar';
 import { Camera } from 'lucide-react';
 
@@ -8,11 +8,48 @@ interface LandingPageProps {
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
+    const stickerModules = import.meta.glob('/public/stickers/*.png', { eager: true });
+    const availableStickers = Object.keys(stickerModules)
+        .map(path => path.split('/').pop())
+        .filter((name): name is string => typeof name === 'string');
+
+    const randomStickers = useMemo(() => {
+        const shuffled = [...availableStickers].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 12); // Pick 12 random stickers
+        return selected.map(sticker => ({
+            src: sticker,
+            top: Math.random() * 100,
+            left: Math.random() * 100,
+            rotation: Math.random() * 90 - 45,
+            scale: Math.random() * 0.5 + 0.5,
+        }));
+    }, []);
+
     return (
         <div className="min-h-screen relative overflow-hidden bg-[#F0F7FF] text-stone-800 font-sans selection:bg-blue-200">
 
             {/* Background Gradients */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] md:w-[1200px] md:h-[600px] bg-blue-600/50 rounded-full blur-[100px] pointer-events-none animate-breathe" />
+
+            {/* Random Sticker Background */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+                {randomStickers.map((sticker, index) => (
+                    <img
+                        key={index}
+                        src={`/stickers/${sticker.src}`}
+                        alt="decorative sticker"
+                        className="absolute opacity-40 hover:opacity-100 transition-opacity duration-500 will-change-transform"
+                        style={{
+                            top: `${sticker.top}%`,
+                            left: `${sticker.left}%`,
+                            transform: `translate(-50%, -50%) rotate(${sticker.rotation}deg) scale(${sticker.scale})`,
+                            maxWidth: '150px',
+                            width: '100%',
+                            height: 'auto'
+                        }}
+                    />
+                ))}
+            </div>
 
             {/* Navbar */}
             <Navbar onNavigate={onNavigate} activePage="landing" />
@@ -43,7 +80,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
             </div>
 
             {/* Floating Strips - Decorative Left */}
-            <div className="absolute top-1/2 left-[5%] xl:left-[10%] -translate-y-1/2 -rotate-6 hidden lg:block animate-float-slow pointer-events-none hover:scale-105 transition-transform duration-500">
+            <div className="absolute top-1/2 left-[2%] md:left-[5%] xl:left-[10%] -translate-y-1/2 -rotate-6 scale-[0.65] md:scale-100 animate-float-slow pointer-events-none hover:scale-105 transition-transform duration-500 z-0">
                 <div className="bg-white p-2 pb-6 shadow-[0_20px_40px_-5px_rgba(0,0,0,0.1)] rounded-md w-[130px] space-y-2 transform perspective-1000 rotate-y-12">
                     <div className="w-full aspect-[4/3] bg-stone-100 grayscale hover:grayscale-0 transition-all duration-700 rounded-sm overflow-hidden border border-stone-100">
                         <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&q=80" className="w-full h-full object-cover" />
@@ -59,7 +96,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
             </div>
 
             {/* Floating Strips - Decorative Right */}
-            <div className="absolute top-1/2 right-[5%] xl:right-[10%] -translate-y-1/2 rotate-6 hidden lg:block animate-float-delayed pointer-events-none hover:scale-105 transition-transform duration-500">
+            <div className="absolute top-1/2 right-[2%] md:right-[5%] xl:right-[10%] -translate-y-1/2 rotate-6 scale-[0.65] md:scale-100 animate-float-delayed pointer-events-none hover:scale-105 transition-transform duration-500 z-0">
                 <div className="bg-[#1a1a1a] p-2 pb-6 shadow-[0_20px_40px_-5px_rgba(0,0,0,0.2)] rounded-md w-[130px] space-y-2 transform perspective-1000 -rotate-y-12">
                     <div className="w-full aspect-[4/3] bg-stone-800 sepia opacity-90 rounded-sm overflow-hidden">
                         <img src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=300&q=80" className="w-full h-full object-cover opacity-80" />
@@ -75,7 +112,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
             </div>
 
             <div className="absolute bottom-4 left-0 w-full text-center text-[15px] text-stone-700/50">
-                Follow me on instagram <a href="https://instagram.com/galuh.wikri" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-pink-600 transition-colors">@galuh.wikri</a>
+                Follow me on instagram <a href="https://instagram.com/galuh.wikri" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-blue-400 transition-colors">@galuh.wikri</a>
             </div>
 
         </div>

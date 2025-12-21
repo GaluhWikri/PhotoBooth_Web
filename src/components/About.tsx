@@ -81,7 +81,7 @@ const About: React.FC<AboutProps> = ({ onNavigate }) => {
                     </div>
 
                     <div className="relative">
-                        <div className="absolute -inset-4 bg-gradient-to-tr from-blue-200 to-pink-200 rounded-[2.5rem] rotate-3 blur-lg opacity-60"></div>
+                        <div className="absolute -inset-4 bg-gradient-to-tr from-blue-200 to-blue-200 rounded-[2.5rem] rotate-3 blur-lg opacity-60"></div>
                         <div className="relative bg-white p-8 rounded-[2rem] shadow-xl border border-stone-100">
                             <div className="aspect-[4/3] bg-stone-100 rounded-2xl overflow-hidden mb-6 relative group flex items-center justify-center">
                                 <img
