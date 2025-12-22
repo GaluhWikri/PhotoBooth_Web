@@ -16,23 +16,34 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
         .filter((name): name is string => typeof name === 'string');
 
     const [stickerUrls, setStickerUrls] = useState<string[]>([]);
+    const [layoutImages, setLayoutImages] = useState<string[]>([]);
 
     useEffect(() => {
-        const fetchStickers = async () => {
+        const fetchAssets = async () => {
             try {
-                const { data, error } = await supabase
+                // Fetch Stickers
+                const { data: stickersData, error: stickersError } = await supabase
                     .from('stickers')
                     .select('url');
 
-                if (error || !data || data.length === 0) {
-                    console.warn('LandingPage: Supabase fetch error or empty, using local fallback.');
-                    // Fallback to local paths
+                if (stickersError || !stickersData || stickersData.length === 0) {
+                    console.warn('LandingPage: Supabase stickers fetch error or empty, using local fallback.');
                     setStickerUrls(localStickerNames.map(name => `/Stickers/${name}`));
                 } else {
-                    // Use Supabase URLs
-                    // Shuffle and pick a few? The existing logic picks 12 random ones.
-                    // We can just load all URLs here and let the useMemo below handle selection.
-                    setStickerUrls(data.map((item: any) => item.url));
+                    setStickerUrls(stickersData.map((item: any) => item.url));
+                }
+
+                // Fetch Layouts
+                const { data: layoutsData, error: layoutsError } = await supabase
+                    .from('layouts')
+                    .select('preview_image_url')
+                    .order('id', { ascending: true });
+
+                if (layoutsError || !layoutsData || layoutsData.length === 0) {
+                    console.warn('LandingPage: Layouts fetch error or empty.');
+                    setLayoutImages([]);
+                } else {
+                    setLayoutImages(layoutsData.map((item: any) => item.preview_image_url));
                 }
             } catch (err) {
                 console.warn('LandingPage: Fetch failed, using fallback.', err);
@@ -40,7 +51,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
             }
         };
 
-        fetchStickers();
+        fetchAssets();
     }, []);
 
     const randomStickers = useMemo(() => {
@@ -112,37 +123,51 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
                 </button>
             </div>
 
-            {/* Floating Strips - Decorative Left */}
-            <div className="absolute top-1/2 left-[2%] md:left-[5%] xl:left-[10%] -translate-y-1/2 -rotate-6 scale-[0.65] md:scale-100 animate-float-slow pointer-events-none hover:scale-105 transition-transform duration-500 z-0">
-                <div className="bg-white p-2 pb-6 shadow-[0_20px_40px_-5px_rgba(0,0,0,0.1)] rounded-md w-[130px] space-y-2 transform perspective-1000 rotate-y-12">
-                    <div className="w-full aspect-[4/3] bg-stone-100 grayscale hover:grayscale-0 transition-all duration-700 rounded-sm overflow-hidden border border-stone-100">
-                        <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&q=80" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="w-full aspect-[4/3] bg-stone-100 grayscale hover:grayscale-0 transition-all duration-700 rounded-sm overflow-hidden border border-stone-100">
-                        <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&q=80" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="w-full aspect-[4/3] bg-stone-100 grayscale hover:grayscale-0 transition-all duration-700 rounded-sm overflow-hidden border border-stone-100">
-                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="text-center pt-2"><span className="font-serif text-[10px] text-stone-300 tracking-widest">G.STUDIO</span></div>
-                </div>
-            </div>
+            {/* Floating Layouts - 4 Total (2 Left, 2 Right) */}
 
-            {/* Floating Strips - Decorative Right */}
-            <div className="absolute top-1/2 right-[2%] md:right-[5%] xl:right-[10%] -translate-y-1/2 rotate-6 scale-[0.65] md:scale-100 animate-float-delayed pointer-events-none hover:scale-105 transition-transform duration-500 z-0">
-                <div className="bg-[#1a1a1a] p-2 pb-6 shadow-[0_20px_40px_-5px_rgba(0,0,0,0.2)] rounded-md w-[130px] space-y-2 transform perspective-1000 -rotate-y-12">
-                    <div className="w-full aspect-[4/3] bg-stone-800 sepia opacity-90 rounded-sm overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=300&q=80" className="w-full h-full object-cover opacity-80" />
-                    </div>
-                    <div className="w-full aspect-[4/3] bg-stone-800 sepia opacity-90 rounded-sm overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=300&q=80" className="w-full h-full object-cover opacity-80" />
-                    </div>
-                    <div className="w-full aspect-[4/3] bg-stone-800 sepia opacity-90 rounded-sm overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&q=80" className="w-full h-full object-cover opacity-80" />
-                    </div>
-                    <div className="text-center pt-2"><span className="font-serif text-[10px] text-stone-500 tracking-widest">PHOTOBOOTH</span></div>
+            {/* Top Left Layout */}
+            {layoutImages.length >= 1 && (
+                <div className="absolute top-[25%] left-[2%] md:left-[5%] xl:left-[8%] -translate-y-1/2 -rotate-6 scale-[0.35] md:scale-75 lg:scale-90 animate-float-slow pointer-events-none hover:scale-100 transition-transform duration-500 z-0 shadow-2xl">
+                    <img
+                        src={layoutImages[3]}
+                        alt="Layout 1"
+                        className="w-auto h-[200px] md:h-[350px] object-contain rounded-sm transition-all duration-700"
+                    />
                 </div>
-            </div>
+            )}
+
+            {/* Bottom Left Layout */}
+            {layoutImages.length >= 2 && (
+                <div className="absolute top-[65%] left-[8%] md:left-[12%] xl:left-[15%] -translate-y-1/2 rotate-3 scale-[0.3] md:scale-[0.65] lg:scale-75 animate-float-delayed pointer-events-none hover:scale-90 transition-transform duration-500 z-0 shadow-2xl">
+                    <img
+                        src={layoutImages[1]}
+                        alt="Layout 2"
+                        className="w-auto h-[180px] md:h-[320px] object-contain rounded-sm transition-all duration-700"
+                    />
+                </div>
+            )}
+
+            {/* Top Right Layout */}
+            {layoutImages.length >= 3 && (
+                <div className="absolute top-[25%] right-[2%] md:right-[5%] xl:right-[8%] -translate-y-1/2 rotate-6 scale-[0.35] md:scale-75 lg:scale-90 animate-float-slow pointer-events-none hover:scale-100 transition-transform duration-500 z-0 shadow-2xl">
+                    <img
+                        src={layoutImages[2]}
+                        alt="Layout 3"
+                        className="w-auto h-[200px] md:h-[350px] object-contain rounded-sm transition-all duration-700"
+                    />
+                </div>
+            )}
+
+            {/* Bottom Right Layout */}
+            {layoutImages.length >= 4 && (
+                <div className="absolute top-[65%] right-[8%] md:right-[12%] xl:right-[15%] -translate-y-1/2 -rotate-3 scale-[0.3] md:scale-[0.65] lg:scale-75 animate-float-delayed pointer-events-none hover:scale-90 transition-transform duration-500 z-0 shadow-2xl">
+                    <img
+                        src={layoutImages[0]}
+                        alt="Layout 4"
+                        className="w-auto h-[180px] md:h-[320px] object-contain rounded-sm transition-all duration-700"
+                    />
+                </div>
+            )}
 
             <div className="absolute bottom-4 left-0 w-full text-center text-[15px] text-stone-700/50">
                 Follow me on instagram <a href="https://instagram.com/galuh.wikri" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-blue-400 transition-colors">@galuh.wikri</a>
