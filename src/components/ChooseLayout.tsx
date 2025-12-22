@@ -95,7 +95,7 @@ const ChooseLayout: React.FC<ChooseLayoutProps> = ({ onSelect, onNavigate }) => 
                                     }}
                                 />
                                 {(layout.type === 'strip-4' || layout.type === 'grid-6') && (
-                                    <div className="absolute top-2 right-[-20px] rotate-45 bg-blue-500 text-white text-[8px] font-bold px-6 py-1 shadow-md z-10">
+                                    <div className="absolute top-1 right-[-20px] rotate-6 bg-blue-500 text-white text-[10px] font-bold px-6 py-1 shadow-md z-10 rounded-2xl">
                                         POPULAR
                                     </div>
                                 )}

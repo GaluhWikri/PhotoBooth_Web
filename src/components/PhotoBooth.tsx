@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, Sticker, Download, X, ImageIcon } from 'lucide-react';
+import { Camera, Upload, Sticker, Download, X, ImageIcon, ArrowLeft } from 'lucide-react';
 import CameraComponent from './Camera';
 import PhotoStrip, { StickerObject, PhotoStripHandle } from './PhotoStrip';
 import LandingPage from './LandingPage';
@@ -129,7 +129,17 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
 
       <div className="max-w-6xl mx-auto px-4">
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mt-12">
+        <div className="mt-8 mb-4">
+          <button
+            onClick={() => onNavigate('layout-selection')}
+            className="inline-flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors group px-4 py-2 rounded-full hover:bg-stone-100"
+          >
+            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            <span className="font-medium">Back to Layouts</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
 
           {/* Left Column: Preview (Width 5/12) */}
           <div className="lg:col-span-5 order-1 lg:order-1">
