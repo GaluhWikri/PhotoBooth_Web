@@ -1,6 +1,7 @@
 import React, { useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import { Download, Image as ImageIcon, X, RefreshCw, ZoomIn, ZoomOut } from 'lucide-react';
 import Draggable from 'react-draggable';
+import { LayoutConfig } from './ChooseLayout';
 
 // Tipe data untuk objek stiker
 export interface StickerObject {
@@ -22,18 +23,20 @@ interface Photo {
 // Properti yang diterima oleh komponen ini
 interface PhotoStripProps {
   photos: Photo[];
+  layout: LayoutConfig;
   background: string;
   onDeletePhoto: (id: string) => void;
   stickers: StickerObject[];
   onUpdateSticker: (id: string, newProps: Partial<StickerObject>) => void;
   onDeleteSticker: (id: string) => void;
+  readonly?: boolean;
 }
 
 export interface PhotoStripHandle {
   download: () => void;
 }
 
-const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, background, onDeletePhoto, stickers, onUpdateSticker, onDeleteSticker }, ref) => {
+const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layout, background, onDeletePhoto, stickers, onUpdateSticker, onDeleteSticker, readonly = false }, ref) => {
   const stripRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
   const [activeStickerId, setActiveStickerId] = useState<string | null>(null);
@@ -45,8 +48,8 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, back
   // --- FUNGSI UNDUH FINAL: MENGUKUR PRATINJAU & MENGGAMBAR ULANG ---
   const downloadPhotoStrip = async () => {
     const previewElement = stripRef.current;
-    if (!previewElement || photos.length < 4) {
-      alert("Harap ambil 4 foto terlebih dahulu.");
+    if (!previewElement || photos.length < layout.photoCount) {
+      alert(`Harap ambil ${layout.photoCount} foto terlebih dahulu.`);
       return;
     }
     setActiveStickerId(null); // Sembunyikan kontrol stiker sebelum download
@@ -57,14 +60,16 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, back
     try {
       // 1. UKUR SEMUA ELEMEN DARI PRATINJAU SECARA PRESISI
       const previewRect = previewElement.getBoundingClientRect();
-      const aspectRatio = previewRect.height / previewRect.width;
       const imageElements = Array.from(previewElement.querySelectorAll('img.photo-image'));
       const textElement = textRef.current;
-      if (!textElement || imageElements.length < 4) throw new Error("Elemen pratinjau tidak lengkap.");
+
+      // Note: textElement logic needs adjustment because position might vary with grid, but stick to bottom for now
+      if (!textElement || imageElements.length < layout.photoCount) throw new Error("Elemen pratinjau tidak lengkap.");
 
       // 2. BUAT KANVAS BARU DENGAN RESOLUSI TINGGI & PROPORSIONAL
-      const finalWidth = 1500; // Resolusi tinggi untuk kualitas cetak
-      const finalHeight = finalWidth * aspectRatio;
+      // Use a fixed width for high res output, calculate height based on layout aspect ratio
+      const finalWidth = 1200;
+      const finalHeight = finalWidth / layout.aspectRatio; // defined in validation as width/height
 
       const canvas = document.createElement('canvas');
       canvas.width = finalWidth;
@@ -104,6 +109,10 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, back
       }
 
       // 4. GAMBAR ULANG SETIAP FOTO DENGAN POSISI & GAYA YANG TEPAT
+
+      // Since we are using Grid/Flex in CSS, getting exact positions from DOM is safest
+      // We map the preview element positions to the canvas coordinate system
+
       for (const imgEl of imageElements) {
         const imgRect = imgEl.getBoundingClientRect();
 
@@ -121,7 +130,7 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, back
           photoImg.src = (imgEl as HTMLImageElement).src;
         });
 
-        // Rectangle Biasa (Tanpa Rounded Corner yang rumit)
+        // Clip area for photo
         ctx.save();
         ctx.beginPath();
         ctx.rect(x, y, w, h);
@@ -129,23 +138,30 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, back
         ctx.clip();
 
         // Meniru efek 'object-fit: cover' dan 'transform: scaleX(-1)'
-        ctx.translate(finalWidth, 0);
+        // IMPORTANT: The context flip must happen around the image center or handled carefully
+        // Standard approach: Translate to center of slot, scale -1 1, draw image centered
+
+        ctx.translate(x + w / 2, y + h / 2);
         ctx.scale(-1, 1);
+
         const imgAspectRatio = photoImg.width / photoImg.height;
         const slotAspectRatio = w / h;
-        let sx = 0, sy = 0, sWidth = photoImg.width, sHeight = photoImg.height;
-        if (imgAspectRatio > slotAspectRatio) {
-          sWidth = photoImg.height * slotAspectRatio;
-          sx = (photoImg.width - sWidth) / 2;
-        } else {
-          sHeight = photoImg.width / slotAspectRatio;
-          sy = (photoImg.height - sHeight) / 2;
-        }
-        // Perbaiki koordinat X setelah flip horizontal: (finalWidth - x - w)
-        ctx.drawImage(photoImg, sx, sy, sWidth, sHeight, finalWidth - x - w, y, w, h);
+        let drawW = w;
+        let drawH = h;
 
-        // Tambahkan border tipis putih/transparan seperti di CSS
+        if (imgAspectRatio > slotAspectRatio) {
+          // Image is wider, crop width
+          drawW = h * imgAspectRatio;
+        } else {
+          // Image is taller, crop height
+          drawH = w / imgAspectRatio;
+        }
+
+        ctx.drawImage(photoImg, -drawW / 2, -drawH / 2, drawW, drawH);
+
         ctx.restore();
+
+        // Border
         ctx.strokeStyle = 'rgba(255,255,255,0.2)';
         ctx.lineWidth = 2 * (finalWidth / previewRect.width);
         ctx.strokeRect(x, y, w, h);
@@ -170,14 +186,18 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, back
       }
 
       // 6. GAMBAR ULANG TEKS
+      // Re-measure text element position relative to preview container
       const textRect = textElement.getBoundingClientRect();
       const textStyle = getComputedStyle(textElement);
-      const x = (textRect.left - previewRect.left + textRect.width / 2) / previewRect.width * finalWidth;
-      const y = (textRect.top - previewRect.top + textRect.height / 2) / previewRect.height * finalHeight;
+
+      const tx = (textRect.left - previewRect.left + textRect.width / 2) / previewRect.width * finalWidth;
+      const ty = (textRect.top - previewRect.top + textRect.height / 2) / previewRect.height * finalHeight;
 
       ctx.fillStyle = textStyle.color;
       // Include fontStyle (italic)
-      ctx.font = `${textStyle.fontStyle} ${textStyle.fontWeight} ${parseFloat(textStyle.fontSize) / previewRect.width * finalWidth}px ${textStyle.fontFamily.split(',')[0]}`;
+      // Scale font size based on width ratio
+      const fontSize = parseFloat(textStyle.fontSize) * (finalWidth / previewRect.width);
+      ctx.font = `${textStyle.fontStyle} ${textStyle.fontWeight} ${fontSize}px ${textStyle.fontFamily.split(',')[0]}`;
 
       // Add Shadow matching CSS '0 1px 2px rgba(0,0,0,0.3)'
       ctx.shadowColor = 'rgba(0,0,0,0.3)';
@@ -186,7 +206,7 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, back
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(textElement.innerText, x, y);
+      ctx.fillText(textElement.innerText, tx, ty);
 
       // 7. UNDUH HASIL AKHIR
       const link = document.createElement('a');
@@ -206,71 +226,101 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, back
     ? { backgroundImage: `url(${background})`, backgroundSize: 'cover', backgroundPosition: 'center' }
     : { backgroundColor: background };
 
-  return (
-    <div className="bg-transparent"> {/* REMOVED: Wrapper styling to simple transparent div */}
-      {/* REMOVED: Header Bar */}
+  // Calculate Grid Styles based on layout
+  const getGridStyle = () => {
+    switch (layout.type) {
+      case 'strip-2': return 'grid-cols-1 grid-rows-2';
+      case 'strip-4': return 'grid-cols-1 grid-rows-4';
+      case 'grid-4': return 'grid-cols-2 grid-rows-2';
+      case 'grid-6': return 'grid-cols-2 grid-rows-3';
+      default: return 'grid-cols-1';
+    }
+  };
 
+  return (
+    <div className="bg-transparent">
       <div
         ref={stripRef}
-        className="w-full max-w-sm mx-auto overflow-hidden relative"
-        style={backgroundStyle}
+        className="mx-auto overflow-hidden relative shadow-lg"
+        style={{
+          ...backgroundStyle,
+          aspectRatio: `${layout.aspectRatio}`, // Uses CSS aspect-ratio property
+          width: '100%',
+        }}
         onClick={(e) => { if (e.target === e.currentTarget) setActiveStickerId(null); }}
       >
-        <div className="z-0">
-          <div className="p-4 space-y-2">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div key={photos[index]?.id || index} className="relative">
+        <div className="z-0 h-full flex flex-col">
+          {/* Main Photo Grid */}
+          <div className={`p-4 grid gap-2 flex-grow min-h-0 ${getGridStyle()}`}>
+            {Array.from({ length: layout.photoCount }).map((_, index) => (
+              <div key={photos[index]?.id || index} className="relative w-full h-full overflow-hidden">
                 {photos[index] ? (
                   <>
-                    <img src={photos[index].dataUrl} alt={`Photo ${index + 1}`} className="w-full aspect-[3/2] object-cover border-2 border-white/20 shadow-sm photo-image" style={{ transform: 'scaleX(-1)' }} />
-                    <button onClick={() => onDeletePhoto(photos[index].id)} className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-red-500 transition-colors z-10"><X className="w-3 h-3" /></button>
+                    <img
+                      src={photos[index].dataUrl}
+                      alt={`Photo ${index + 1}`}
+                      className="w-full h-full object-cover border-2 border-white/20 shadow-sm photo-image"
+                      style={{ transform: 'scaleX(-1)' }} // Mirroring
+                    />
+                    {!readonly && (
+                      <button onClick={() => onDeletePhoto(photos[index].id)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 hover:bg-red-500 transition-colors z-10"><X className="w-3 h-3" /></button>
+                    )}
                   </>
                 ) : (
-                  <div className="w-full aspect-[3/2] bg-black/5 flex items-center justify-center border-2 border-dashed border-black/10">
+                  <div className="w-full h-full bg-black/5 flex items-center justify-center border-2 border-dashed border-black/10">
                     <ImageIcon className="w-6 h-6 text-black/20" />
                   </div>
                 )}
               </div>
             ))}
           </div>
-          <div className="text-center pb-6 pt-2">
-            <p ref={textRef} className="font-serif italic text-xl text-white/90 tracking-wider" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>G.STUDIO</p>
+
+          {/* Footer Text */}
+          <div className="text-center pb-4">
+            <p ref={textRef}
+              className={`font-serif italic text-white/90 tracking-wider ${layout.type.includes('strip') ? 'text-sm' : 'text-xl'}`}
+              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+              G.STUDIO
+            </p>
           </div>
         </div>
 
-        <div className="absolute top-0 left-0 w-full h-full z-10 pointer-events-none">
-          {stickers.map(sticker => (
-            <Draggable
-              key={sticker.id}
-              position={{ x: sticker.x, y: sticker.y }}
-              onStop={(_, data) => onUpdateSticker(sticker.id, { x: data.x, y: data.y })}
-              onStart={() => setActiveStickerId(sticker.id)}
-              bounds="parent"
-            >
-              <div
-                id={sticker.id}
-                className={`absolute p-2 border-2 ${activeStickerId === sticker.id ? 'border-blue-500 border-dashed' : 'border-transparent'} pointer-events-auto`}
-                onClick={(e) => { e.stopPropagation(); setActiveStickerId(sticker.id); }}
+        {/* Stickers Overlay */}
+        {!readonly && (
+          <div className="absolute top-0 left-0 w-full h-full z-10 pointer-events-none">
+            {stickers.map(sticker => (
+              <Draggable
+                key={sticker.id}
+                position={{ x: sticker.x, y: sticker.y }}
+                onStop={(_, data) => onUpdateSticker(sticker.id, { x: data.x, y: data.y })}
+                onStart={() => setActiveStickerId(sticker.id)}
+                bounds="parent"
               >
-                <img
-                  src={sticker.src}
-                  alt="sticker"
-                  className="pointer-events-none"
-                  width={80 * sticker.scale}
-                  style={{ transform: `rotate(${sticker.rotation}deg)` }}
-                />
-                {activeStickerId === sticker.id && (
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white rounded-full shadow-lg flex gap-1 p-1 z-20">
-                    <button onClick={() => onUpdateSticker(sticker.id, { scale: sticker.scale * 1.1 })} className="p-1.5 hover:bg-gray-200 rounded-full"><ZoomIn size={16} /></button>
-                    <button onClick={() => onUpdateSticker(sticker.id, { scale: sticker.scale * 0.9 })} className="p-1.5 hover:bg-gray-200 rounded-full"><ZoomOut size={16} /></button>
-                    <button onClick={() => onUpdateSticker(sticker.id, { rotation: sticker.rotation + 15 })} className="p-1.5 hover:bg-gray-200 rounded-full"><RefreshCw size={16} /></button>
-                    <button onClick={() => onDeleteSticker(sticker.id)} className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600"><X size={16} /></button>
-                  </div>
-                )}
-              </div>
-            </Draggable>
-          ))}
-        </div>
+                <div
+                  id={sticker.id}
+                  className={`absolute p-2 border-2 ${activeStickerId === sticker.id ? 'border-blue-500 border-dashed' : 'border-transparent'} pointer-events-auto`}
+                  onClick={(e) => { e.stopPropagation(); setActiveStickerId(sticker.id); }}
+                >
+                  <img
+                    src={sticker.src}
+                    alt="sticker"
+                    className="pointer-events-none"
+                    width={80 * sticker.scale}
+                    style={{ transform: `rotate(${sticker.rotation}deg)` }}
+                  />
+                  {activeStickerId === sticker.id && (
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white rounded-full shadow-lg flex gap-1 p-1 z-20">
+                      <button onClick={() => onUpdateSticker(sticker.id, { scale: sticker.scale * 1.1 })} className="p-1.5 hover:bg-gray-200 rounded-full"><ZoomIn size={16} /></button>
+                      <button onClick={() => onUpdateSticker(sticker.id, { scale: sticker.scale * 0.9 })} className="p-1.5 hover:bg-gray-200 rounded-full"><ZoomOut size={16} /></button>
+                      <button onClick={() => onUpdateSticker(sticker.id, { rotation: sticker.rotation + 15 })} className="p-1.5 hover:bg-gray-200 rounded-full"><RefreshCw size={16} /></button>
+                      <button onClick={() => onDeleteSticker(sticker.id)} className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600"><X size={16} /></button>
+                    </div>
+                  )}
+                </div>
+              </Draggable>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

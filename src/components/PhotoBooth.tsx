@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, RotateCcw, Palette as Palette2, Upload, Github, Sticker, ArrowLeft, Download, X, ImageIcon } from 'lucide-react';
+import { Camera, RotateCcw, Palette as Palette2, Upload, Github, Sticker, Download, X, ImageIcon } from 'lucide-react';
 import CameraComponent from './Camera';
 import PhotoStrip, { StickerObject, PhotoStripHandle } from './PhotoStrip';
 import LandingPage from './LandingPage';
@@ -11,17 +11,20 @@ interface Photo {
   timestamp: number;
 }
 
+
 // Secara otomatis membaca semua file .png dari folder /public/stickers/
 const stickerModules = import.meta.glob('/public/stickers/*.png', { eager: true });
 const availableStickers = Object.keys(stickerModules)
   .map(path => path.split('/').pop())
   .filter((name): name is string => typeof name === 'string');
 
+
 import About from './About';
 import PrivacyPolicy from './PrivacyPolicy';
 import Contact from './Contact';
+import ChooseLayout, { LayoutConfig } from './ChooseLayout';
 
-const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavigate }) => {
+const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: LayoutConfig }> = ({ onNavigate, layout }) => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [showCamera, setShowCamera] = useState(false);
   const [background, setBackground] = useState<string>('#948979');
@@ -36,11 +39,11 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
   ];
 
   const handlePhotoCapture = (photoDataUrl: string) => {
-    if (photos.length < 4) {
+    if (photos.length < layout.photoCount) {
       const newPhoto = { id: Date.now().toString(), dataUrl: photoDataUrl, timestamp: Date.now() };
       setPhotos(prev => [...prev, newPhoto]);
     }
-    if (photos.length === 3) setShowCamera(false);
+    if (photos.length === layout.photoCount - 1) setShowCamera(false);
   };
 
   const handleDeletePhoto = (id: string) => {
@@ -53,7 +56,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
   };
 
   const toggleCamera = () => {
-    if (photos.length < 4) setShowCamera(!showCamera);
+    if (photos.length < layout.photoCount) setShowCamera(!showCamera);
   };
 
   const handleDownload = () => {
@@ -75,7 +78,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && photos.length < 4) {
+    if (file && photos.length < layout.photoCount) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (typeof e.target?.result === 'string') {
@@ -84,7 +87,6 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
       };
       reader.readAsDataURL(file);
     }
-    // Reset file input
     event.target.value = '';
   };
 
@@ -136,6 +138,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
                 <PhotoStrip
                   ref={stripRef}
                   photos={photos}
+                  layout={layout}
                   background={background}
                   onDeletePhoto={handleDeletePhoto}
                   stickers={activeStickers}
@@ -147,7 +150,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
               <div className="mt-8 flex gap-4 w-full justify-center">
                 <button
                   onClick={handleDownload}
-                  disabled={photos.length < 4}
+                  disabled={photos.length < layout.photoCount}
                   className="px-6 py-2 rounded-full bg-blue-400 text-white font-semibold hover:bg-blue-500 transition-colors shadow-md disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <Download className="w-4 h-4" /> Download
@@ -155,7 +158,6 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
                 <button onClick={resetPhotos} className="px-6 py-2 rounded-full bg-red-100 text-red-500 font-semibold hover:bg-red-200 transition-colors">
                   Retake
                 </button>
-                {/* Share/Download are handled in PhotoStrip mostly or can be added here if needed, but keeping simple for now */}
               </div>
             </div>
           </div>
@@ -167,7 +169,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
 
             {/* Camera Section */}
             <div>
-              {showCamera && photos.length < 4 ? (
+              {showCamera && photos.length < layout.photoCount ? (
                 <div className="relative bg-black rounded-[2.5rem] overflow-hidden shadow-2xl mx-auto max-w-xl ring-8 ring-white/50">
                   {/* Floating Glass Header */}
                   <div className="absolute top-0 left-0 right-0 p-6 z-20 flex justify-between items-start pointer-events-none">
@@ -191,11 +193,11 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
                 <div className="text-center lg:text-left mb-8">
                   <button
                     onClick={toggleCamera}
-                    disabled={photos.length >= 4}
+                    disabled={photos.length >= layout.photoCount}
                     className="inline-flex items-center gap-3 bg-stone-800 hover:bg-black text-white px-8 py-4 rounded-full font-bold shadow-lg transition-all hover:scale-105 active:scale-95 disabled:bg-stone-300 disabled:cursor-not-allowed"
                   >
                     <Camera className="w-5 h-5" />
-                    {photos.length >= 4 ? 'Photo Strip Ready' : `Take Photos (${photos.length}/4)`}
+                    {photos.length >= layout.photoCount ? 'Photo Strip Ready' : `Take Photos (${photos.length}/${layout.photoCount})`}
                   </button>
                   <p className="mt-3 text-stone-400 text-sm pl-2">Click to start the camera sequence</p>
                 </div>
@@ -203,7 +205,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
             </div>
 
             {/* Upload Logic */}
-            {!showCamera && photos.length < 4 && (
+            {!showCamera && photos.length < layout.photoCount && (
               <div className="text-center lg:text-left mb-8 -mt-6">
                 <p className="text-sm text-stone-500 mb-2">Or upload existing photos</p>
                 <label className="inline-flex items-center gap-3 bg-white text-stone-700 border border-stone-200 hover:bg-stone-50 px-6 py-3 rounded-full font-medium shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer">
@@ -276,6 +278,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavi
 
 const PhotoBooth: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('landing');
+  const [selectedLayout, setSelectedLayout] = useState<LayoutConfig | null>(null);
 
   const navigate = (page: string) => {
     setCurrentPage(page);
@@ -286,12 +289,21 @@ const PhotoBooth: React.FC = () => {
     <>
       {currentPage === 'landing' && (
         <LandingPage
-          onStart={() => navigate('booth')}
+          onStart={() => navigate('layout-selection')}
           onNavigate={navigate}
         />
       )}
-      {currentPage === 'booth' && (
-        <BoothContent onNavigate={navigate} />
+      {currentPage === 'layout-selection' && (
+        <ChooseLayout
+          onSelect={(layout) => {
+            setSelectedLayout(layout);
+            navigate('booth');
+          }}
+          onNavigate={navigate}
+        />
+      )}
+      {currentPage === 'booth' && selectedLayout && (
+        <BoothContent onNavigate={navigate} layout={selectedLayout} />
       )}
       {currentPage === 'about' && (
         <About onNavigate={navigate} />

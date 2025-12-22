@@ -44,7 +44,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, activePage, onHomeClick }) 
                         </button>
                     ))}
                     <button
-                        onClick={() => handleNavigation('landing')}
+                        onClick={() => handleNavigation('layout-selection')}
                         className="hover:text-stone-900 transition-colors"
                     >
                         choose layout
@@ -83,7 +83,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, activePage, onHomeClick }) 
                             </button>
                         ))}
                         <button
-                            onClick={() => handleNavigation('landing')}
+                            onClick={() => handleNavigation('layout-selection')}
                             className="p-4 rounded-2xl text-left font-medium hover:bg-stone-50 text-stone-600 transition-all border-t border-stone-100 mt-2"
                         >
                             Choose Layout
