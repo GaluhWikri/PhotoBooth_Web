@@ -21,10 +21,11 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
   const [showCamera, setShowCamera] = useState(false);
   const [background, setBackground] = useState<string>('#948979');
   const [activeStickers, setActiveStickers] = useState<StickerObject[]>([]);
+  // State untuk menyimpan stiker dari Supabase
   const [fetchedStickers, setFetchedStickers] = useState<{ name: string, url: string }[]>([]);
   const stripRef = useRef<PhotoStripHandle>(null);
 
-  // Initial load of stickers from Supabase
+  // --- SUPABASE: Fetch Stickers ---
   useEffect(() => {
     const fetchStickers = async () => {
       try {
@@ -36,10 +37,6 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
         if (error) {
           console.error('Sticker fetch error:', error.message);
         } else if (data) {
-          console.log('✅ Loaded stickers from Supabase:', data.length);
-          if (data.length === 0) {
-            console.warn('⚠️ Sticker table is empty or RLS is blocking access.');
-          }
           setFetchedStickers(data.map((s: any) => ({ name: s.name, url: s.url })));
         }
       } catch (err) {
@@ -112,7 +109,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
   const addSticker = (stickerUrl: string) => {
     const newSticker: StickerObject = {
       id: `sticker_${Date.now()}`,
-      src: stickerUrl, // Now accepts full URL
+      src: stickerUrl,
       x: 100,
       y: 100,
       scale: 1,
@@ -131,24 +128,21 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
     setActiveStickers(prev => prev.filter(s => s.id !== id));
   };
 
-  // Load Paper Textures
-  // Menggunakan glob dengan relative path module untuk mendeteksi file saat build
-  // '../../public' mengarah ke folder public dari lokasi component ini (src/components)
+  // --- PAPER TEXTURES ---
+  // Menggunakan glob pada folder public (relative path) untuk auto-detect file
   const paperModules = import.meta.glob('../../public/Paper/*.jpeg');
 
   const paperTextures = Object.keys(paperModules).map((path) => {
-    // path: '../../public/Paper/1.jpeg' -> fileName: '1.jpeg'
     const fileName = path.split('/').pop();
     return {
       name: fileName || 'Paper',
-      // Manual construct URL agar mengarah ke file statis di folder public (bukan hasil bundle)
+      // Manual construct URL agar mengarah ke file statis di folder public dengan benar
       value: `${import.meta.env.BASE_URL}Paper/${fileName}`
     };
   });
 
   return (
     <div className="min-h-screen bg-[#F0F7FF] pb-10">
-      {/* Navbar with Home Link acting as Back button */}
       <Navbar onNavigate={onNavigate} activePage="booth" />
 
       <div className="max-w-6xl mx-auto px-4">
@@ -165,7 +159,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
 
-          {/* Left Column: Preview (Width 5/12) */}
+          {/* Left Column: Preview */}
           <div className="lg:col-span-5 order-1 lg:order-1">
             <div className="sticky top-24 flex flex-col items-center">
               <div className={`relative transform transition-all duration-300 hover:scale-[1.02] shadow-2xl rounded-sm overflow-hidden border-[6px] border-white ${layout.type.startsWith('grid') ? 'w-[320px]' : 'w-[220px]'}`}>
@@ -180,7 +174,6 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
                   onDeleteSticker={deleteSticker}
                 />
               </div>
-              {/* Action Buttons below preview similar to reference */}
               <div className="mt-8 flex gap-4 w-full justify-center">
                 <button
                   onClick={handleDownload}
@@ -196,16 +189,15 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
             </div>
           </div>
 
-          {/* Right Column: Controls (Width 7/12) */}
+          {/* Right Column: Controls */}
           <div className="lg:col-span-7 order-2 lg:order-2 space-y-8">
 
             <h2 className="text-3xl font-serif text-stone-800 text-center lg:text-left mb-8">Customize Your Photo</h2>
 
-            {/* Camera Section */}
+            {/* Camera/Upload Section */}
             <div>
               {showCamera && photos.length < layout.photoCount ? (
                 <div className="relative bg-black rounded-[2.5rem] overflow-hidden shadow-2xl mx-auto lg:mx-0 w-fit ring-8 ring-white/50">
-                  {/* Floating Glass Header */}
                   <div className="absolute top-0 left-0 right-0 p-6 z-20 flex justify-between items-start pointer-events-none">
                     <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white text-sm font-medium pointer-events-auto">
                       <span className="relative flex h-2.5 w-2.5 mr-1">
@@ -214,10 +206,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
                       </span>
                       Live Camera
                     </div>
-                    <button
-                      onClick={() => setShowCamera(false)}
-                      className="w-10 h-10 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white hover:bg-white hover:text-black transition-all pointer-events-auto"
-                    >
+                    <button onClick={() => setShowCamera(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white hover:bg-white hover:text-black transition-all pointer-events-auto">
                       <X className="w-5 h-5" />
                     </button>
                   </div>
@@ -238,7 +227,6 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
               )}
             </div>
 
-            {/* Upload Logic */}
             {!showCamera && photos.length < layout.photoCount && (
               <div className="text-center lg:text-left mb-8 -mt-6">
                 <p className="text-sm text-stone-500 mb-2">Or upload existing photos</p>
@@ -250,17 +238,12 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
               </div>
             )}
 
-            {/* Customization Controls */}
             <div className="space-y-8">
-
-              {/* Background Templates */}
+              {/* Templates */}
               <div>
                 <h3 className="text-lg font-medium text-stone-700 mb-4">Templates & Colors:</h3>
                 <div className="grid grid-cols-6 sm:grid-cols-8 gap-3">
-                  <label
-                    className="w-full aspect-square rounded-full border-2 border-dashed border-stone-300 flex items-center justify-center text-stone-400 hover:text-blue-500 hover:border-blue-500 cursor-pointer transition-colors bg-white"
-                    title="Upload Custom"
-                  >
+                  <label className="w-full aspect-square rounded-full border-2 border-dashed border-stone-300 flex items-center justify-center text-stone-400 hover:text-blue-500 hover:border-blue-500 cursor-pointer transition-colors bg-white">
                     <Upload className="w-5 h-5" />
                     <input type="file" className="hidden" accept="image/*" onChange={handleBackgroundImage} />
                   </label>
@@ -273,7 +256,6 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
                       title={color.name}
                     />
                   ))}
-                  {/* Paper Textures */}
                   {paperTextures.map((paper) => (
                     <button
                       key={paper.value}
@@ -286,7 +268,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
                 </div>
               </div>
 
-              {/* Stickers */}
+              {/* Stickers (Supabase) */}
               <div className="bg-white/50 rounded-3xl p-6 border border-white/60">
                 <h3 className="text-lg font-medium text-stone-700 mb-4 flex items-center gap-2">
                   <Sticker className="w-5 h-5" /> Add Stickers
@@ -306,9 +288,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
 
             </div>
           </div>
-
         </div>
-
       </div>
     </div>
   );
@@ -325,33 +305,12 @@ const PhotoBooth: React.FC = () => {
 
   return (
     <>
-      {currentPage === 'landing' && (
-        <LandingPage
-          onStart={() => navigate('layout-selection')}
-          onNavigate={navigate}
-        />
-      )}
-      {currentPage === 'layout-selection' && (
-        <ChooseLayout
-          onSelect={(layout) => {
-            setSelectedLayout(layout);
-            navigate('booth');
-          }}
-          onNavigate={navigate}
-        />
-      )}
-      {currentPage === 'booth' && selectedLayout && (
-        <BoothContent onNavigate={navigate} layout={selectedLayout} />
-      )}
-      {currentPage === 'about' && (
-        <About onNavigate={navigate} />
-      )}
-      {currentPage === 'privacy' && (
-        <PrivacyPolicy onNavigate={navigate} />
-      )}
-      {currentPage === 'contact' && (
-        <Contact onNavigate={navigate} />
-      )}
+      {currentPage === 'landing' && <LandingPage onStart={() => navigate('layout-selection')} onNavigate={navigate} />}
+      {currentPage === 'layout-selection' && <ChooseLayout onSelect={(layout) => { setSelectedLayout(layout); navigate('booth'); }} onNavigate={navigate} />}
+      {currentPage === 'booth' && selectedLayout && <BoothContent onNavigate={navigate} layout={selectedLayout} />}
+      {currentPage === 'about' && <About onNavigate={navigate} />}
+      {currentPage === 'privacy' && <PrivacyPolicy onNavigate={navigate} />}
+      {currentPage === 'contact' && <Contact onNavigate={navigate} />}
     </>
   );
 };
