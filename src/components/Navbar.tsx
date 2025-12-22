@@ -4,10 +4,9 @@ import { Github, Menu, X } from 'lucide-react';
 interface NavbarProps {
     onNavigate: (page: string) => void;
     activePage?: string;
-    onHomeClick?: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onNavigate, activePage, onHomeClick }) => {
+const Navbar: React.FC<NavbarProps> = ({ onNavigate, activePage }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const handleNavigation = (page: string) => {

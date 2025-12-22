@@ -1,11 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Camera, X, Zap, MoreHorizontal, Sparkles, Timer, Grid } from 'lucide-react';
+import { X, MoreHorizontal, Sparkles, Grid } from 'lucide-react';
 
 import { LayoutConfig } from './ChooseLayout';
 
 interface CameraProps {
   onCapture: (photoDataUrl: string) => void;
-  onClose: () => void;
+
   layout: LayoutConfig;
 }
 
@@ -26,7 +26,7 @@ const filters = [
   { name: '80s', value: 'contrast(1.1) brightness(1.1) saturate(1.5) sepia(0.2)' },
 ];
 
-const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose, layout }) => {
+const CameraComponent: React.FC<CameraProps> = ({ onCapture, layout }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);

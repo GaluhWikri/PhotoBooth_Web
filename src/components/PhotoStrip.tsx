@@ -1,5 +1,5 @@
-import React, { useRef, useState, useImperativeHandle, forwardRef } from 'react';
-import { Download, Image as ImageIcon, X, RefreshCw, ZoomIn, ZoomOut } from 'lucide-react';
+import { useRef, useState, useImperativeHandle, forwardRef } from 'react';
+import { Image as ImageIcon, X, RefreshCw, ZoomIn, ZoomOut } from 'lucide-react';
 import Draggable from 'react-draggable';
 import { LayoutConfig } from './ChooseLayout';
 

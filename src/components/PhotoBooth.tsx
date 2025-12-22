@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, RotateCcw, Palette as Palette2, Upload, Github, Sticker, Download, X, ImageIcon } from 'lucide-react';
+import { Camera, Upload, Sticker, Download, X, ImageIcon } from 'lucide-react';
 import CameraComponent from './Camera';
 import PhotoStrip, { StickerObject, PhotoStripHandle } from './PhotoStrip';
 import LandingPage from './LandingPage';
@@ -187,7 +187,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
                       <X className="w-5 h-5" />
                     </button>
                   </div>
-                  <CameraComponent onCapture={handlePhotoCapture} onClose={() => setShowCamera(false)} layout={layout} />
+                  <CameraComponent onCapture={handlePhotoCapture} layout={layout} />
                 </div>
               ) : (
                 <div className="text-center lg:text-left mb-8">

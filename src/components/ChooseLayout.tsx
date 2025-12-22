@@ -24,7 +24,7 @@ export const LAYOUTS: LayoutConfig[] = [
         photoCount: 4,
         aspectRatio: 1 / 3, // 2x6
         cssClass: 'strip-4',
-        previewImage: '/layouttype/type 1.png'
+        previewImage: '/LayoutType/type 1.png'
     },
     {
         id: 'strip-2',
@@ -34,7 +34,7 @@ export const LAYOUTS: LayoutConfig[] = [
         photoCount: 2,
         aspectRatio: 1 / 3, // 2x6
         cssClass: 'strip-2',
-        previewImage: '/layouttype/type 2.png'
+        previewImage: '/LayoutType/type 2.png'
     },
     {
         id: 'grid-6',
@@ -44,7 +44,7 @@ export const LAYOUTS: LayoutConfig[] = [
         photoCount: 6,
         aspectRatio: 2 / 3, // 4x6
         cssClass: 'grid-6',
-        previewImage: '/layouttype/type 3.png'
+        previewImage: '/LayoutType/type 3.png'
     },
     {
         id: 'grid-4',
@@ -54,7 +54,7 @@ export const LAYOUTS: LayoutConfig[] = [
         photoCount: 4,
         aspectRatio: 2 / 3, // 4x6
         cssClass: 'grid-4',
-        previewImage: '/layouttype/type 4.png'
+        previewImage: '/LayoutType/type 4.png'
     },
 ];
 
