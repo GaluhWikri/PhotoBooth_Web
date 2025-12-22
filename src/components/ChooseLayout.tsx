@@ -1,6 +1,7 @@
-import React from 'react';
-import { ArrowLeft } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import Navbar from './Navbar';
+import { supabase } from '../lib/supabaseClient';
 
 export type LayoutType = 'strip-2' | 'strip-4' | 'grid-4' | 'grid-6';
 
@@ -15,7 +16,7 @@ export interface LayoutConfig {
     previewImage: string;
 }
 
-export const LAYOUTS: LayoutConfig[] = [
+export const DEFAULT_LAYOUTS: LayoutConfig[] = [
     {
         id: 'strip-4',
         type: 'strip-4',
@@ -65,6 +66,46 @@ interface ChooseLayoutProps {
 
 
 const ChooseLayout: React.FC<ChooseLayoutProps> = ({ onSelect, onNavigate }) => {
+    const [layouts, setLayouts] = useState<LayoutConfig[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchLayouts = async () => {
+            try {
+                // Check if Supabase is configured
+                const { data, error } = await supabase
+                    .from('layouts')
+                    .select('*')
+                    .order('display_order', { ascending: true });
+
+                if (error) {
+                    console.error('Supabase fetch error:', error.message);
+                } else if (data && data.length > 0) {
+                    console.log('✅ Loaded layouts from Supabase:', data.length);
+                    const mappedLayouts: LayoutConfig[] = data.map((item: any) => ({
+                        id: item.id,
+                        type: item.type as LayoutType,
+                        title: item.title,
+                        description: item.description,
+                        photoCount: item.photo_count,
+                        aspectRatio: item.aspect_ratio,
+                        cssClass: item.css_class,
+                        previewImage: item.preview_image_url
+                    }));
+                    setLayouts(mappedLayouts);
+                } else {
+                    console.warn('⚠️ Layouts table is empty.');
+                }
+            } catch (err) {
+                console.error('Error connecting to Supabase:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchLayouts();
+    }, []);
+
     return (
         <div className="min-h-screen bg-[#F0F7FF] flex flex-col">
             <Navbar onNavigate={onNavigate} />
@@ -75,39 +116,47 @@ const ChooseLayout: React.FC<ChooseLayoutProps> = ({ onSelect, onNavigate }) => 
                     <p className="text-stone-500 text-lg italic">Select from our collection of photo booth layouts</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-                    {LAYOUTS.map((layout) => (
-                        <button
-                            key={layout.id}
-                            onClick={() => onSelect(layout)}
-                            className="group flex flex-col items-center gap-6 transition-all hover:scale-105 hover:rotate-1 duration-300"
-                        >
-                            <div
-                                className="relative transition-all bg-stone-100 shadow-inner border-4 border-white box-content"
+                {isLoading && layouts === DEFAULT_LAYOUTS ? (
+                    <div className="flex justify-center my-10">
+                        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+                        {layouts.map((layout) => (
+                            <button
+                                key={layout.id}
+                                onClick={() => onSelect(layout)}
+                                className="group flex flex-col items-center gap-6 transition-all hover:scale-105 hover:rotate-1 duration-300"
                             >
-                                <img
-                                    src={layout.previewImage}
-                                    alt={layout.title}
-                                    className="w-full h-full object-contain"
-                                    style={{
-                                        height: '320px',
-                                        width: 'auto'
-                                    }}
-                                />
-                                {(layout.type === 'strip-4' || layout.type === 'grid-6') && (
-                                    <div className="absolute top-1 right-[-20px] rotate-6 bg-blue-500 text-white text-[10px] font-bold px-6 py-1 shadow-md z-10 rounded-2xl">
-                                        POPULAR
-                                    </div>
-                                )}
-                            </div>
+                                <div
+                                    className="relative transition-all bg-stone-100 shadow-inner border-4 border-white box-content"
+                                >
+                                    <img
+                                        src={layout.previewImage}
+                                        alt={layout.title}
+                                        className="w-full h-full object-contain"
+                                        style={{
+                                            height: '320px',
+                                            width: 'auto'
+                                        }}
+                                    // Add fallback specifically for image load error? 
+                                    // Keeping simple for now.
+                                    />
+                                    {(layout.type === 'strip-4' || layout.type === 'grid-6') && (
+                                        <div className="absolute top-1 right-[-20px] rotate-6 bg-blue-500 text-white text-[10px] font-bold px-6 py-1 shadow-md z-10 rounded-2xl">
+                                            POPULAR
+                                        </div>
+                                    )}
+                                </div>
 
-                            <div className="text-center">
-                                <h3 className="text-lg font-bold text-stone-800 mb-1">{layout.title}</h3>
-                                <p className="text-xs text-stone-500 font-medium uppercase tracking-wide">{layout.description}</p>
-                            </div>
-                        </button>
-                    ))}
-                </div>
+                                <div className="text-center">
+                                    <h3 className="text-lg font-bold text-stone-800 mb-1">{layout.title}</h3>
+                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide">{layout.description}</p>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 <div className="mt-16 text-center">
                     <button

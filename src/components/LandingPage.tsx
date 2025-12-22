@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import Navbar from './Navbar';
 import { Camera } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
 interface LandingPageProps {
     onStart: () => void;
@@ -8,22 +9,54 @@ interface LandingPageProps {
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
-    const stickerModules = import.meta.glob('/public/stickers/*.png', { eager: true });
-    const availableStickers = Object.keys(stickerModules)
+    // Local fallback logic
+    const stickerModules = import.meta.glob('/public/Stickers/*.png', { eager: true });
+    const localStickerNames = Object.keys(stickerModules)
         .map(path => path.split('/').pop())
         .filter((name): name is string => typeof name === 'string');
 
+    const [stickerUrls, setStickerUrls] = useState<string[]>([]);
+
+    useEffect(() => {
+        const fetchStickers = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('stickers')
+                    .select('url');
+
+                if (error || !data || data.length === 0) {
+                    console.warn('LandingPage: Supabase fetch error or empty, using local fallback.');
+                    // Fallback to local paths
+                    setStickerUrls(localStickerNames.map(name => `/Stickers/${name}`));
+                } else {
+                    // Use Supabase URLs
+                    // Shuffle and pick a few? The existing logic picks 12 random ones.
+                    // We can just load all URLs here and let the useMemo below handle selection.
+                    setStickerUrls(data.map((item: any) => item.url));
+                }
+            } catch (err) {
+                console.warn('LandingPage: Fetch failed, using fallback.', err);
+                setStickerUrls(localStickerNames.map(name => `/Stickers/${name}`));
+            }
+        };
+
+        fetchStickers();
+    }, []);
+
     const randomStickers = useMemo(() => {
-        const shuffled = [...availableStickers].sort(() => 0.5 - Math.random());
+        if (stickerUrls.length === 0) return [];
+
+        const shuffled = [...stickerUrls].sort(() => 0.5 - Math.random());
         const selected = shuffled.slice(0, 12); // Pick 12 random stickers
-        return selected.map(sticker => ({
-            src: sticker,
+
+        return selected.map(stickerUrl => ({
+            src: stickerUrl,
             top: Math.random() * 100,
             left: Math.random() * 100,
             rotation: Math.random() * 90 - 45,
             scale: Math.random() * 0.5 + 0.5,
         }));
-    }, []);
+    }, [stickerUrls]);
 
     return (
         <div className="min-h-screen relative overflow-hidden bg-[#F0F7FF] text-stone-800 font-sans selection:bg-blue-200">
@@ -36,7 +69,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
                 {randomStickers.map((sticker, index) => (
                     <img
                         key={index}
-                        src={`/stickers/${sticker.src}`}
+                        src={sticker.src}
                         alt="decorative sticker"
                         className="absolute opacity-40 hover:opacity-100 transition-opacity duration-500 will-change-transform"
                         style={{

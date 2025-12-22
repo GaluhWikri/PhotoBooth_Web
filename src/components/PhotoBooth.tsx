@@ -1,9 +1,14 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Upload, Sticker, Download, X, ImageIcon, ArrowLeft } from 'lucide-react';
 import CameraComponent from './Camera';
 import PhotoStrip, { StickerObject, PhotoStripHandle } from './PhotoStrip';
 import LandingPage from './LandingPage';
 import Navbar from './Navbar';
+import About from './About';
+import PrivacyPolicy from './PrivacyPolicy';
+import Contact from './Contact';
+import ChooseLayout, { LayoutConfig } from './ChooseLayout';
+import { supabase } from '../lib/supabaseClient';
 
 interface Photo {
   id: string;
@@ -11,25 +16,39 @@ interface Photo {
   timestamp: number;
 }
 
-
-// Secara otomatis membaca semua file .png dari folder /public/stickers/
-const stickerModules = import.meta.glob('/public/stickers/*.png', { eager: true });
-const availableStickers = Object.keys(stickerModules)
-  .map(path => path.split('/').pop())
-  .filter((name): name is string => typeof name === 'string');
-
-
-import About from './About';
-import PrivacyPolicy from './PrivacyPolicy';
-import Contact from './Contact';
-import ChooseLayout, { LayoutConfig } from './ChooseLayout';
-
 const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: LayoutConfig }> = ({ onNavigate, layout }) => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [showCamera, setShowCamera] = useState(false);
   const [background, setBackground] = useState<string>('#948979');
   const [activeStickers, setActiveStickers] = useState<StickerObject[]>([]);
+  const [fetchedStickers, setFetchedStickers] = useState<{ name: string, url: string }[]>([]);
   const stripRef = useRef<PhotoStripHandle>(null);
+
+  // Initial load of stickers from Supabase
+  useEffect(() => {
+    const fetchStickers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('stickers')
+          .select('*')
+          .order('name', { ascending: true });
+
+        if (error) {
+          console.error('Sticker fetch error:', error.message);
+        } else if (data) {
+          console.log('✅ Loaded stickers from Supabase:', data.length);
+          if (data.length === 0) {
+            console.warn('⚠️ Sticker table is empty or RLS is blocking access.');
+          }
+          setFetchedStickers(data.map((s: any) => ({ name: s.name, url: s.url })));
+        }
+      } catch (err) {
+        console.error('Sticker fetch failed:', err);
+      }
+    };
+
+    fetchStickers();
+  }, []);
 
   const colors = [
     { name: 'pink', value: '#948979' }, { name: 'Navy Blue', value: '#1E3E62' },
@@ -90,10 +109,10 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
     event.target.value = '';
   };
 
-  const addSticker = (stickerSrc: string) => {
+  const addSticker = (stickerUrl: string) => {
     const newSticker: StickerObject = {
       id: `sticker_${Date.now()}`,
-      src: `/stickers/${stickerSrc}`,
+      src: stickerUrl, // Now accepts full URL
       x: 100,
       y: 100,
       scale: 1,
@@ -113,12 +132,12 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
   };
 
   // Load Paper Textures
-  const paperModules = import.meta.glob('/public/paper/*.jpeg', { eager: true });
+  const paperModules = import.meta.glob('/public/Paper/*.jpeg', { eager: true });
   const paperTextures = Object.keys(paperModules).map(path => {
     const fileName = path.split('/').pop();
     return {
       name: fileName || 'Paper',
-      value: `/paper/${fileName}`
+      value: `/Paper/${fileName}`
     };
   });
 
@@ -268,11 +287,15 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
                   <Sticker className="w-5 h-5" /> Add Stickers
                 </h3>
                 <div className="grid grid-cols-6 sm:grid-cols-8 gap-3 max-h-60 overflow-y-auto custom-scrollbar p-1">
-                  {availableStickers.map(sticker => (
-                    <button key={sticker} onClick={() => addSticker(sticker)} className="bg-white p-2 rounded-xl shadow-sm border border-stone-100 hover:border-blue-300 hover:shadow-md transition-all hover:-translate-y-1">
-                      <img src={`/stickers/${sticker}`} alt={sticker} className="w-full h-full object-contain pointer-events-none" />
-                    </button>
-                  ))}
+                  {fetchedStickers.length === 0 ? (
+                    <p className="col-span-full text-center text-stone-400 text-sm">Loading stickers...</p>
+                  ) : (
+                    fetchedStickers.map(sticker => (
+                      <button key={sticker.name} onClick={() => addSticker(sticker.url)} className="bg-white p-2 rounded-xl shadow-sm border border-stone-100 hover:border-blue-300 hover:shadow-md transition-all hover:-translate-y-1">
+                        <img src={sticker.url} alt={sticker.name} className="w-full h-full object-contain pointer-events-none" />
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
 
