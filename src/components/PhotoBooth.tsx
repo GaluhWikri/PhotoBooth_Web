@@ -21,30 +21,44 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
   const [showCamera, setShowCamera] = useState(false);
   const [background, setBackground] = useState<string>('#948979');
   const [activeStickers, setActiveStickers] = useState<StickerObject[]>([]);
-  // State untuk menyimpan stiker dari Supabase
+  // State untuk menyimpan stiker dan paper dari Supabase
   const [fetchedStickers, setFetchedStickers] = useState<{ name: string, url: string }[]>([]);
+  const [fetchedPapers, setFetchedPapers] = useState<{ name: string, url: string }[]>([]);
   const stripRef = useRef<PhotoStripHandle>(null);
 
-  // --- SUPABASE: Fetch Stickers ---
+  // --- SUPABASE: Fetch Stickers & Papers ---
   useEffect(() => {
-    const fetchStickers = async () => {
+    const fetchAssets = async () => {
       try {
-        const { data, error } = await supabase
+        // Fetch Stickers
+        const { data: stickersData, error: stickersError } = await supabase
           .from('stickers')
           .select('*')
           .order('name', { ascending: true });
 
-        if (error) {
-          console.error('Sticker fetch error:', error.message);
-        } else if (data) {
-          setFetchedStickers(data.map((s: any) => ({ name: s.name, url: s.url })));
+        if (stickersError) {
+          console.error('Sticker fetch error:', stickersError.message);
+        } else if (stickersData) {
+          setFetchedStickers(stickersData.map((s: any) => ({ name: s.name, url: s.url })));
+        }
+
+        // Fetch Papers
+        const { data: papersData, error: papersError } = await supabase
+          .from('paper')
+          .select('*')
+          .order('name', { ascending: true });
+
+        if (papersError) {
+          console.error('Paper fetch error:', papersError.message);
+        } else if (papersData) {
+          setFetchedPapers(papersData.map((p: any) => ({ name: p.name, url: p.url })));
         }
       } catch (err) {
-        console.error('Sticker fetch failed:', err);
+        console.error('Asset fetch failed:', err);
       }
     };
 
-    fetchStickers();
+    fetchAssets();
   }, []);
 
   const colors = [
@@ -127,23 +141,6 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
   const deleteSticker = (id: string) => {
     setActiveStickers(prev => prev.filter(s => s.id !== id));
   };
-
-  // Load Paper Textures
-  // Menggunakan glob pada folder public secara otomatis (versi bersih sesuai request)
-  // Eager: true agar modul dimuat langsung saat inisialisasi
-  // UPDATE: Menggunakan path relative '../../public' untuk mencoba memancing Vite scan folder ini
-  const paperModules = import.meta.glob('/public/Paper/*.jpeg', { eager: true });
-  const paperTextures = Object.keys(paperModules).map(path => {
-    const fileName = path.split('/').pop();
-    return {
-      name: fileName || 'Paper',
-      value: `/Paper/${fileName}`
-    };
-  });
-
-  if (paperTextures.length === 0) {
-    console.warn('Paper folder detected empty or path issue.');
-  }
 
   return (
     <div className="min-h-screen bg-[#F0F7FF] pb-10">
@@ -260,12 +257,12 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
                       title={color.name}
                     />
                   ))}
-                  {paperTextures.map((paper) => (
+                  {fetchedPapers.map((paper) => (
                     <button
-                      key={paper.value}
-                      onClick={() => setBackground(paper.value)}
-                      className={`w-full aspect-square rounded-full shadow-sm transition-transform hover:scale-110 bg-cover bg-center ${background === paper.value ? 'ring-2 ring-offset-2 ring-stone-800 scale-110' : ''}`}
-                      style={{ backgroundImage: `url(${paper.value})` }}
+                      key={paper.url}
+                      onClick={() => setBackground(paper.url)}
+                      className={`w-full aspect-square rounded-full shadow-sm transition-transform hover:scale-110 bg-cover bg-center ${background === paper.url ? 'ring-2 ring-offset-2 ring-stone-800 scale-110' : ''}`}
+                      style={{ backgroundImage: `url(${paper.url})` }}
                       title={paper.name}
                     />
                   ))}
