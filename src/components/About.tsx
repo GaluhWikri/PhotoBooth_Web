@@ -85,7 +85,7 @@ const About: React.FC<AboutProps> = ({ onNavigate }) => {
                         <div className="relative bg-white p-8 rounded-[2rem] shadow-xl border border-stone-100">
                             <div className="aspect-[4/3] bg-stone-100 rounded-2xl overflow-hidden mb-6 relative group flex items-center justify-center">
                                 <img
-                                    src="/image/icons8-web-camera-100.png"
+                                    src="/Icon/icons8-web-camera-100.png"
                                     alt="PhotoBooth Camera"
                                     className="w-1/2 h-1/2 object-contain opacity-90"
                                 />
