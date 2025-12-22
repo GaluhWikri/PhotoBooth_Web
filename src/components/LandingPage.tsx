@@ -82,14 +82,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
                         key={index}
                         src={sticker.src}
                         alt="decorative sticker"
-                        className="absolute opacity-40 hover:opacity-100 transition-opacity duration-500 will-change-transform"
+                        className="absolute opacity-0 hover:opacity-100 transition-opacity duration-500 will-change-transform animate-fade-in-subtle"
                         style={{
                             top: `${sticker.top}%`,
                             left: `${sticker.left}%`,
                             transform: `translate(-50%, -50%) rotate(${sticker.rotation}deg) scale(${sticker.scale})`,
                             maxWidth: '150px',
                             width: '100%',
-                            height: 'auto'
+                            height: 'auto',
+                            animationDelay: `${index * 0.1}s`
                         }}
                     />
                 ))}
@@ -127,45 +128,53 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
 
             {/* Top Left Layout */}
             {layoutImages.length >= 1 && (
-                <div className="absolute top-[25%] left-[2%] md:left-[5%] xl:left-[8%] -translate-y-1/2 -rotate-6 scale-[0.35] md:scale-75 lg:scale-90 animate-float-slow pointer-events-none hover:scale-100 transition-transform duration-500 z-0 shadow-2xl">
-                    <img
-                        src={layoutImages[3]}
-                        alt="Layout 1"
-                        className="w-auto h-[200px] md:h-[350px] object-contain rounded-sm transition-all duration-700"
-                    />
+                <div className="opacity-0 animate-fade-in-up">
+                    <div className="absolute top-[25%] left-[2%] md:left-[5%] xl:left-[8%] -translate-y-1/2 -rotate-6 scale-[0.35] md:scale-75 lg:scale-90 animate-float-slow pointer-events-none hover:scale-100 transition-transform duration-500 z-0 shadow-2xl">
+                        <img
+                            src={layoutImages[3]}
+                            alt="Layout 1"
+                            className="w-auto h-[200px] md:h-[350px] object-contain rounded-sm transition-all duration-700"
+                        />
+                    </div>
                 </div>
             )}
 
             {/* Bottom Left Layout */}
             {layoutImages.length >= 2 && (
-                <div className="absolute top-[65%] left-[8%] md:left-[12%] xl:left-[15%] -translate-y-1/2 rotate-3 scale-[0.3] md:scale-[0.65] lg:scale-75 animate-float-delayed pointer-events-none hover:scale-90 transition-transform duration-500 z-0 shadow-2xl">
-                    <img
-                        src={layoutImages[1]}
-                        alt="Layout 2"
-                        className="w-auto h-[180px] md:h-[320px] object-contain rounded-sm transition-all duration-700"
-                    />
+                <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                    <div className="absolute top-[53%] left-[8%] md:left-[12%] xl:left-[15%] -translate-y-1/2 rotate-3 scale-[0.3] md:scale-[0.65] lg:scale-75 animate-float-delayed pointer-events-none hover:scale-90 transition-transform duration-500 z-0 shadow-2xl">
+                        <img
+                            src={layoutImages[1]}
+                            alt="Layout 2"
+                            className="w-auto h-[180px] md:h-[320px] object-contain rounded-sm transition-all duration-700"
+                        />
+                    </div>
                 </div>
             )}
 
             {/* Top Right Layout */}
             {layoutImages.length >= 3 && (
-                <div className="absolute top-[25%] right-[2%] md:right-[5%] xl:right-[8%] -translate-y-1/2 rotate-6 scale-[0.35] md:scale-75 lg:scale-90 animate-float-slow pointer-events-none hover:scale-100 transition-transform duration-500 z-0 shadow-2xl">
-                    <img
-                        src={layoutImages[2]}
-                        alt="Layout 3"
-                        className="w-auto h-[200px] md:h-[350px] object-contain rounded-sm transition-all duration-700"
-                    />
+                <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                    <div className="absolute top-[25%] right-[2%] md:right-[5%] xl:right-[8%] -translate-y-1/2 rotate-6 scale-[0.35] md:scale-75 lg:scale-90 animate-float-slow pointer-events-none hover:scale-100 transition-transform duration-500 z-0 shadow-2xl">
+                        <img
+                            src={layoutImages[2]}
+                            alt="Layout 3"
+                            className="w-auto h-[200px] md:h-[350px] object-contain rounded-sm transition-all duration-700"
+                        />
+                    </div>
                 </div>
             )}
 
             {/* Bottom Right Layout */}
             {layoutImages.length >= 4 && (
-                <div className="absolute top-[65%] right-[8%] md:right-[12%] xl:right-[15%] -translate-y-1/2 -rotate-3 scale-[0.3] md:scale-[0.65] lg:scale-75 animate-float-delayed pointer-events-none hover:scale-90 transition-transform duration-500 z-0 shadow-2xl">
-                    <img
-                        src={layoutImages[0]}
-                        alt="Layout 4"
-                        className="w-auto h-[180px] md:h-[320px] object-contain rounded-sm transition-all duration-700"
-                    />
+                <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+                    <div className="absolute top-[50%] right-[8%] md:right-[12%] xl:right-[15%] -translate-y-1/2 -rotate-3 scale-[0.3] md:scale-[0.65] lg:scale-75 animate-float-delayed pointer-events-none hover:scale-90 transition-transform duration-500 z-0 shadow-2xl">
+                        <img
+                            src={layoutImages[0]}
+                            alt="Layout 4"
+                            className="w-auto h-[180px] md:h-[320px] object-contain rounded-sm transition-all duration-700"
+                        />
+                    </div>
                 </div>
             )}
 

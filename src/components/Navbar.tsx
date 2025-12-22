@@ -67,7 +67,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, activePage }) => {
 
             {/* Mobile Menu Dropdown */}
             {isMobileMenuOpen && (
-                <div className="absolute top-full left-0 w-full px-4 mt-2 md:hidden animate-fade-in-up origin-top">
+                <div className="absolute top-full left-0 w-full px-4 mt-2 md:hidden animate-in fade-in slide-in-from-top-2 duration-1500 origin-top">
                     <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-4 flex flex-col gap-2 overflow-hidden">
                         {navLinks.map((link) => (
                             <button

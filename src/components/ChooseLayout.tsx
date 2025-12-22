@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Navbar from './Navbar';
 import { supabase } from '../lib/supabaseClient';
 
@@ -68,6 +68,16 @@ interface ChooseLayoutProps {
 const ChooseLayout: React.FC<ChooseLayoutProps> = ({ onSelect, onNavigate }) => {
     const [layouts, setLayouts] = useState<LayoutConfig[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    // Navigation functions for mobile carousel
+    const handlePrev = () => {
+        setCurrentIndex((prev) => (prev === 0 ? layouts.length - 1 : prev - 1));
+    };
+
+    const handleNext = () => {
+        setCurrentIndex((prev) => (prev === layouts.length - 1 ? 0 : prev + 1));
+    };
 
     useEffect(() => {
         const fetchLayouts = async () => {
@@ -121,41 +131,113 @@ const ChooseLayout: React.FC<ChooseLayoutProps> = ({ onSelect, onNavigate }) => 
                         <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-                        {layouts.map((layout) => (
-                            <button
-                                key={layout.id}
-                                onClick={() => onSelect(layout)}
-                                className="group flex flex-col items-center gap-6 transition-all hover:scale-105 hover:rotate-1 duration-300"
-                            >
-                                <div
-                                    className="relative transition-all bg-stone-100 shadow-inner border-4 border-white box-content"
-                                >
-                                    <img
-                                        src={layout.previewImage}
-                                        alt={layout.title}
-                                        className="w-full h-full object-contain"
-                                        style={{
-                                            height: '320px',
-                                            width: 'auto'
-                                        }}
-                                    // Add fallback specifically for image load error? 
-                                    // Keeping simple for now.
-                                    />
-                                    {(layout.type === 'strip-4' || layout.type === 'grid-6') && (
-                                        <div className="absolute top-1 right-[-20px] rotate-6 bg-blue-500 text-white text-[10px] font-bold px-6 py-1 shadow-md z-10 rounded-2xl">
-                                            POPULAR
-                                        </div>
-                                    )}
-                                </div>
+                    <>
+                        {/* Mobile Carousel View (< md breakpoint) */}
+                        <div className="md:hidden relative w-full max-w-sm mx-auto px-16">
+                            {layouts.length > 0 && (
+                                <>
+                                    {/* Carousel Container */}
+                                    <div className="opacity-0 animate-fade-in-up">
+                                        <button
+                                            onClick={() => onSelect(layouts[currentIndex])}
+                                            className="group flex flex-col items-center gap-6 w-full"
+                                        >
+                                            <div className="relative transition-all bg-stone-100 shadow-inner border-4 border-white box-content">
+                                                <img
+                                                    src={layouts[currentIndex].previewImage}
+                                                    alt={layouts[currentIndex].title}
+                                                    className="w-full h-full object-contain"
+                                                    style={{
+                                                        height: '320px',
+                                                        width: 'auto'
+                                                    }}
+                                                />
+                                                {(layouts[currentIndex].type === 'strip-4' || layouts[currentIndex].type === 'grid-6') && (
+                                                    <div className="absolute top-1 right-[-20px] rotate-6 bg-blue-500 text-white text-[10px] font-bold px-6 py-1 shadow-md z-10 rounded-2xl">
+                                                        POPULAR
+                                                    </div>
+                                                )}
+                                            </div>
 
-                                <div className="text-center">
-                                    <h3 className="text-lg font-bold text-stone-800 mb-1">{layout.title}</h3>
-                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide">{layout.description}</p>
+                                            <div className="text-center">
+                                                <h3 className="text-lg font-bold text-stone-800 mb-1">{layouts[currentIndex].title}</h3>
+                                                <p className="text-xs text-stone-500 font-medium uppercase tracking-wide">{layouts[currentIndex].description}</p>
+                                            </div>
+                                        </button>
+                                    </div>
+
+                                    {/* Navigation Buttons */}
+                                    <button
+                                        onClick={handlePrev}
+                                        className="absolute left-0 top-[140px] w-12 h-12 rounded-full bg-white shadow-lg border border-stone-200 flex items-center justify-center text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition-all active:scale-95 z-10"
+                                        aria-label="Previous layout"
+                                    >
+                                        <ChevronLeft className="w-6 h-6" />
+                                    </button>
+                                    <button
+                                        onClick={handleNext}
+                                        className="absolute right-0 top-[140px] w-12 h-12 rounded-full bg-white shadow-lg border border-stone-200 flex items-center justify-center text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition-all active:scale-95 z-10"
+                                        aria-label="Next layout"
+                                    >
+                                        <ChevronRight className="w-6 h-6" />
+                                    </button>
+
+                                    {/* Indicator Dots */}
+                                    <div className="flex justify-center gap-2 mt-6">
+                                        {layouts.map((_, index) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => setCurrentIndex(index)}
+                                                className={`w-2 h-2 rounded-full transition-all ${index === currentIndex
+                                                    ? 'bg-blue-500 w-6'
+                                                    : 'bg-stone-300 hover:bg-stone-400'
+                                                    }`}
+                                                aria-label={`Go to layout ${index + 1}`}
+                                            />
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Desktop Grid View (>= md breakpoint) */}
+                        <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+                            {layouts.map((layout, index) => (
+                                <div
+                                    key={layout.id}
+                                    className="opacity-0 animate-fade-in-up"
+                                    style={{ animationDelay: `${index * 0.15}s` }}
+                                >
+                                    <button
+                                        onClick={() => onSelect(layout)}
+                                        className="group flex flex-col items-center gap-6 transition-all hover:scale-105 hover:rotate-1 duration-300"
+                                    >
+                                        <div className="relative transition-all bg-stone-100 shadow-inner border-4 border-white box-content">
+                                            <img
+                                                src={layout.previewImage}
+                                                alt={layout.title}
+                                                className="w-full h-full object-contain"
+                                                style={{
+                                                    height: '320px',
+                                                    width: 'auto'
+                                                }}
+                                            />
+                                            {(layout.type === 'strip-4' || layout.type === 'grid-6') && (
+                                                <div className="absolute top-1 right-[-20px] rotate-6 bg-blue-500 text-white text-[10px] font-bold px-6 py-1 shadow-md z-10 rounded-2xl">
+                                                    POPULAR
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="text-center">
+                                            <h3 className="text-lg font-bold text-stone-800 mb-1">{layout.title}</h3>
+                                            <p className="text-xs text-stone-500 font-medium uppercase tracking-wide">{layout.description}</p>
+                                        </div>
+                                    </button>
                                 </div>
-                            </button>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    </>
                 )}
 
                 <div className="mt-16 text-center">
