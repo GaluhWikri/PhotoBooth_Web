@@ -132,14 +132,16 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
   };
 
   // Load Paper Textures
-  // Menggunakan glob import untuk mendeteksi file secara otomatis dari folder public
-  const paperModules = import.meta.glob('../../public/Paper/*.jpeg', { eager: true });
+  // Menggunakan glob untuk mendeteksi file, tapi menyusun URL secara manual agar aman untuk folder public
+  // Pola ini memanfaatkan Vite untuk listing file saat build, tapi browser akan memuatnya sebagai static asset
+  const paperModules = import.meta.glob('/public/Paper/*.jpeg');
 
-  const paperTextures = Object.entries(paperModules).map(([path, module]: [string, any]) => {
+  const paperTextures = Object.keys(paperModules).map((path) => {
     const fileName = path.split('/').pop();
     return {
       name: fileName || 'Paper',
-      value: module.default
+      // BASE_URL akan otomatis menyesuaikan jika deploy di subfolder/domain
+      value: `${import.meta.env.BASE_URL}Paper/${fileName}`
     };
   });
 
