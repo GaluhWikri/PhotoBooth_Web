@@ -40,6 +40,9 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
   const stripRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
   const [activeStickerId, setActiveStickerId] = useState<string | null>(null);
+  const [showControls, setShowControls] = useState<boolean>(false);
+  const [dragStart, setDragStart] = useState<{ x: number, y: number } | null>(null);
+  const [isClickingControl, setIsClickingControl] = useState<boolean>(false);
 
   useImperativeHandle(ref, () => ({
     download: () => downloadPhotoStrip()
@@ -247,7 +250,12 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
           aspectRatio: `${layout.aspectRatio}`, // Uses CSS aspect-ratio property
           width: '100%',
         }}
-        onClick={(e) => { if (e.target === e.currentTarget) setActiveStickerId(null); }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setActiveStickerId(null);
+            setShowControls(false);
+          }
+        }}
       >
         <div className="z-0 h-full flex flex-col">
           {/* Main Photo Grid */}
@@ -292,14 +300,40 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
               <Draggable
                 key={sticker.id}
                 position={{ x: sticker.x, y: sticker.y }}
-                onStop={(_, data) => onUpdateSticker(sticker.id, { x: data.x, y: data.y })}
-                onStart={() => setActiveStickerId(sticker.id)}
+                onStart={(_, data) => {
+                  setDragStart({ x: data.x, y: data.y });
+                  setActiveStickerId(sticker.id);
+                }}
+                onStop={(_, data) => {
+                  onUpdateSticker(sticker.id, { x: data.x, y: data.y });
+
+                  // Jangan toggle jika user sedang klik tombol kontrol
+                  if (isClickingControl) {
+                    setIsClickingControl(false);
+                    return;
+                  }
+
+                  // Deteksi jika tidak ada pergerakan (click/tap)
+                  if (dragStart && Math.abs(data.x - dragStart.x) < 5 && Math.abs(data.y - dragStart.y) < 5) {
+                    // Ini adalah click/tap, bukan drag
+                    if (activeStickerId === sticker.id && showControls) {
+                      setShowControls(false); // Hide controls
+                      setActiveStickerId(null); // Deselect sticker (hilangkan border)
+                    } else {
+                      setShowControls(true); // Show controls
+                    }
+                  } else {
+                    // Ini adalah drag, tampilkan controls
+                    setShowControls(true);
+                  }
+                  setDragStart(null);
+                }}
                 bounds="parent"
               >
                 <div
                   id={sticker.id}
-                  className={`absolute p-2 border-2 ${activeStickerId === sticker.id ? 'border-blue-500 border-dashed' : 'border-transparent'} pointer-events-auto`}
-                  onClick={(e) => { e.stopPropagation(); setActiveStickerId(sticker.id); }}
+                  className={`absolute py-0.5 px-0 border-2 ${activeStickerId === sticker.id ? 'border-blue-500 border-dashed' : 'border-transparent'} pointer-events-auto`}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <img
                     src={sticker.src}
@@ -308,12 +342,36 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
                     width={80 * sticker.scale}
                     style={{ transform: `rotate(${sticker.rotation}deg)` }}
                   />
-                  {activeStickerId === sticker.id && (
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white rounded-full shadow-lg flex gap-1 p-1 z-20">
-                      <button onClick={() => onUpdateSticker(sticker.id, { scale: sticker.scale * 1.1 })} className="p-1.5 hover:bg-gray-200 rounded-full"><ZoomIn size={16} /></button>
-                      <button onClick={() => onUpdateSticker(sticker.id, { scale: sticker.scale * 0.9 })} className="p-1.5 hover:bg-gray-200 rounded-full"><ZoomOut size={16} /></button>
-                      <button onClick={() => onUpdateSticker(sticker.id, { rotation: sticker.rotation + 15 })} className="p-1.5 hover:bg-gray-200 rounded-full"><RefreshCw size={16} /></button>
-                      <button onClick={() => onDeleteSticker(sticker.id)} className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600"><X size={16} /></button>
+                  {activeStickerId === sticker.id && showControls && (
+                    <div
+                      className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white rounded-full shadow-lg flex gap-1 p-1 z-20"
+                      onMouseDown={(e) => { e.stopPropagation(); setIsClickingControl(true); }}
+                      onTouchStart={(e) => { e.stopPropagation(); setIsClickingControl(true); }}
+                    >
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onUpdateSticker(sticker.id, { scale: sticker.scale * 1.1 }); }}
+                        className="p-1.5 hover:bg-gray-200 rounded-full touch-manipulation active:bg-gray-300"
+                      >
+                        <ZoomIn size={16} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onUpdateSticker(sticker.id, { scale: Math.max(0.3, sticker.scale * 0.9) }); }}
+                        className="p-1.5 hover:bg-gray-200 rounded-full touch-manipulation active:bg-gray-300"
+                      >
+                        <ZoomOut size={16} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onUpdateSticker(sticker.id, { rotation: sticker.rotation + 15 }); }}
+                        className="p-1.5 hover:bg-gray-200 rounded-full touch-manipulation active:bg-gray-300"
+                      >
+                        <RefreshCw size={16} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onDeleteSticker(sticker.id); }}
+                        className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 touch-manipulation active:bg-red-700"
+                      >
+                        <X size={16} />
+                      </button>
                     </div>
                   )}
                 </div>
