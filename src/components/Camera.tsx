@@ -1,9 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Camera, X, Zap, MoreHorizontal, Sparkles, Timer } from 'lucide-react';
 
+import { LayoutConfig } from './ChooseLayout';
+
 interface CameraProps {
   onCapture: (photoDataUrl: string) => void;
   onClose: () => void;
+  layout: LayoutConfig;
 }
 
 const filters = [
@@ -23,7 +26,7 @@ const filters = [
   { name: '80s', value: 'contrast(1.1) brightness(1.1) saturate(1.5) sepia(0.2)' },
 ];
 
-const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
+const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose, layout }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -159,13 +162,30 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose }) => {
     onCapture(photoDataUrl);
   };
 
+  // Determine container aspect ratio based on layout
+  const getContainerStyle = () => {
+    // Base width - effectively the "max" width for standard layouts, others are constrained further
+    const baseStyle = { width: '100%', minWidth: '320px' };
+
+    switch (layout.type) {
+      case 'strip-4': return { ...baseStyle, aspectRatio: '4/3' };
+      case 'grid-6': return { ...baseStyle, aspectRatio: '1/1', maxWidth: '500px' };
+      case 'strip-2': return { ...baseStyle, aspectRatio: '2/3', maxWidth: '420px' };
+      case 'grid-4': return { ...baseStyle, aspectRatio: '2/3', maxWidth: '420px' };
+      default: return { ...baseStyle, aspectRatio: '3/2' };
+    }
+  };
+
   return (
-    <div className="relative w-full h-full bg-black flex flex-col">
+    <div className="relative bg-black flex flex-col items-center justify-center w-full">
       <div className="flex items-center justify-between absolute top-4 left-4 right-4 z-10 opacity-0 pointer-events-none">
         {/* Header placeholder kept for layout stability if needed, hidden now */}
       </div>
 
-      <div className="relative flex-grow flex items-center justify-center overflow-hidden bg-black aspect-[3/2] w-full">
+      <div
+        className="relative overflow-hidden bg-black w-full"
+        style={getContainerStyle()}
+      >
         <video
           ref={videoRef}
           autoPlay

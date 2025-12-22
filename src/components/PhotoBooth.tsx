@@ -134,7 +134,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
           {/* Left Column: Preview (Width 5/12) */}
           <div className="lg:col-span-5 order-1 lg:order-1">
             <div className="sticky top-24 flex flex-col items-center">
-              <div className="relative transform transition-all duration-300 hover:scale-[1.02] shadow-2xl rounded-sm overflow-hidden border-[6px] border-white w-[220px]">
+              <div className={`relative transform transition-all duration-300 hover:scale-[1.02] shadow-2xl rounded-sm overflow-hidden border-[6px] border-white ${layout.type.startsWith('grid') ? 'w-[320px]' : 'w-[220px]'}`}>
                 <PhotoStrip
                   ref={stripRef}
                   photos={photos}
@@ -170,7 +170,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
             {/* Camera Section */}
             <div>
               {showCamera && photos.length < layout.photoCount ? (
-                <div className="relative bg-black rounded-[2.5rem] overflow-hidden shadow-2xl mx-auto max-w-xl ring-8 ring-white/50">
+                <div className="relative bg-black rounded-[2.5rem] overflow-hidden shadow-2xl mx-auto lg:mx-0 w-fit ring-8 ring-white/50">
                   {/* Floating Glass Header */}
                   <div className="absolute top-0 left-0 right-0 p-6 z-20 flex justify-between items-start pointer-events-none">
                     <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white text-sm font-medium pointer-events-auto">
@@ -187,7 +187,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
                       <X className="w-5 h-5" />
                     </button>
                   </div>
-                  <CameraComponent onCapture={handlePhotoCapture} onClose={() => setShowCamera(false)} />
+                  <CameraComponent onCapture={handlePhotoCapture} onClose={() => setShowCamera(false)} layout={layout} />
                 </div>
               ) : (
                 <div className="text-center lg:text-left mb-8">

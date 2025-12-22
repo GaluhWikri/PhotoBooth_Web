@@ -19,7 +19,7 @@ export const LAYOUTS: LayoutConfig[] = [
     {
         id: 'strip-4',
         type: 'strip-4',
-        title: 'Classic Strip',
+        title: 'The Signature',
         description: 'Size 2 x 6 Strip (4 Pose)',
         photoCount: 4,
         aspectRatio: 1 / 3, // 2x6
@@ -29,7 +29,7 @@ export const LAYOUTS: LayoutConfig[] = [
     {
         id: 'strip-2',
         type: 'strip-2',
-        title: 'Layout C',
+        title: 'Portrait Mode',
         description: 'Size 6 x 2 Strip (2 Pose)',
         photoCount: 2,
         aspectRatio: 1 / 3, // 2x6
@@ -39,7 +39,7 @@ export const LAYOUTS: LayoutConfig[] = [
     {
         id: 'grid-6',
         type: 'grid-6',
-        title: 'Layout D',
+        title: 'Mix & Match',
         description: 'Size 6 x 4 Strip (6 Pose)',
         photoCount: 6,
         aspectRatio: 2 / 3, // 4x6
@@ -49,7 +49,7 @@ export const LAYOUTS: LayoutConfig[] = [
     {
         id: 'grid-4',
         type: 'grid-4',
-        title: 'Layout E',
+        title: 'Quad Grid',
         description: 'Size 6 x 4 Strip (4 Pose)',
         photoCount: 4,
         aspectRatio: 2 / 3, // 4x6
