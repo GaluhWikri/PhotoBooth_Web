@@ -137,7 +137,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
     const fileName = path.split('/').pop();
     return {
       name: fileName || 'Paper',
-      value: `/Paper/${fileName}`
+      value: `public/Paper/${fileName}`
     };
   });
 
