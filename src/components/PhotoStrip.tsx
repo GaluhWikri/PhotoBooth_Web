@@ -78,7 +78,7 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
       if (!ctx) throw new Error('Gagal membuat kanvas.');
 
       // 3. GAMBAR BACKGROUND
-      if (background.startsWith('data:image') || background.startsWith('/')) {
+      if (background.startsWith('data:image') || background.includes('/')) {
         const bgImage = new Image();
         bgImage.crossOrigin = 'anonymous';
         await new Promise<void>((resolve, reject) => {
@@ -222,7 +222,7 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
     }
   };
 
-  const backgroundStyle = (background.startsWith('data:image') || background.startsWith('/'))
+  const backgroundStyle = (background.startsWith('data:image') || background.includes('/'))
     ? { backgroundImage: `url(${background})`, backgroundSize: 'cover', backgroundPosition: 'center' }
     : { backgroundColor: background };
 
