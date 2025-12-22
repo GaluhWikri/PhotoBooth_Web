@@ -19,7 +19,7 @@ interface Photo {
 const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: LayoutConfig }> = ({ onNavigate, layout }) => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [showCamera, setShowCamera] = useState(false);
-  const [background, setBackground] = useState<string>('#948979');
+  const [background, setBackground] = useState<string>('#a59983ff');
   const [activeStickers, setActiveStickers] = useState<StickerObject[]>([]);
   // State untuk menyimpan stiker dan paper dari Supabase
   const [fetchedStickers, setFetchedStickers] = useState<{ name: string, url: string }[]>([]);
@@ -62,7 +62,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
   }, []);
 
   const colors = [
-    { name: 'pink', value: '#948979' }, { name: 'Navy Blue', value: '#1E3E62' },
+    { name: 'pink', value: '#a59983ff' }, { name: 'Navy Blue', value: '#1E3E62' },
     { name: 'Blueberry', value: '#52A5CE' }, { name: 'FORREST', value: '#2B2B23' },
     { name: 'olive green', value: '#AFAB23' }, { name: 'Dry earth', value: '#876029' },
     { name: 'BLOOD orangge', value: '#EF6F4C' },
