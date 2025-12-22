@@ -128,18 +128,22 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
     setActiveStickers(prev => prev.filter(s => s.id !== id));
   };
 
-  // --- PAPER TEXTURES ---
-  // Menggunakan glob pada folder public (relative path) untuk auto-detect file
-  const paperModules = import.meta.glob('../../public/Paper/*.jpeg');
+  // Load Paper Textures
+  // Menggunakan glob pada folder public secara otomatis (versi bersih sesuai request)
+  // Eager: true agar modul dimuat langsung saat inisialisasi
+  const paperModules = import.meta.glob('/public/Paper/*.jpeg', { eager: true });
 
-  const paperTextures = Object.keys(paperModules).map((path) => {
+  const paperTextures = Object.keys(paperModules).map(path => {
     const fileName = path.split('/').pop();
     return {
       name: fileName || 'Paper',
-      // Manual construct URL agar mengarah ke file statis di folder public dengan benar
       value: `${import.meta.env.BASE_URL}Paper/${fileName}`
     };
   });
+
+  if (paperTextures.length === 0) {
+    console.warn('Paper folder detected empty or path issue.');
+  }
 
   return (
     <div className="min-h-screen bg-[#F0F7FF] pb-10">
