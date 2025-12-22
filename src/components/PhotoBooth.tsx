@@ -131,7 +131,8 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
   // Load Paper Textures
   // Menggunakan glob pada folder public secara otomatis (versi bersih sesuai request)
   // Eager: true agar modul dimuat langsung saat inisialisasi
-  const paperModules = import.meta.glob('/public/Paper/*.jpeg', { eager: true });
+  // UPDATE: Menggunakan path relative '../../public' untuk mencoba memancing Vite scan folder ini
+  const paperModules = import.meta.glob('../../public/Paper/*.jpeg', { eager: true });
 
   const paperTextures = Object.keys(paperModules).map(path => {
     const fileName = path.split('/').pop();
