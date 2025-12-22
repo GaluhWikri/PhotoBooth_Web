@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Camera, X, Zap, MoreHorizontal, Sparkles, Timer } from 'lucide-react';
+import { Camera, X, Zap, MoreHorizontal, Sparkles, Timer, Grid } from 'lucide-react';
 
 import { LayoutConfig } from './ChooseLayout';
 
@@ -37,6 +37,7 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose, layout }) 
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showFilterSelector, setShowFilterSelector] = useState(false);
   const [timerDuration, setTimerDuration] = useState(3);
+  const [showGrid, setShowGrid] = useState(false);
 
   useEffect(() => {
     startCamera();
@@ -195,6 +196,18 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose, layout }) 
           style={{ transform: 'scaleX(-1)', filter: activeFilter.value }}
         />
 
+        {/* Composition Grid (Rule of Thirds) */}
+        {showGrid && (
+          <div className="absolute inset-0 z-10 pointer-events-none">
+            {/* Horizontal Lines */}
+            <div className="absolute top-1/3 left-0 w-full h-px bg-white/40 shadow-sm"></div>
+            <div className="absolute top-2/3 left-0 w-full h-px bg-white/40 shadow-sm"></div>
+            {/* Vertical Lines */}
+            <div className="absolute top-0 left-1/3 w-px h-full bg-white/40 shadow-sm"></div>
+            <div className="absolute top-0 left-2/3 w-px h-full bg-white/40 shadow-sm"></div>
+          </div>
+        )}
+
         {isFlashing && (
           <div className="absolute inset-0 bg-white opacity-70 pointer-events-none transition-opacity duration-200" />
         )}
@@ -238,7 +251,16 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose, layout }) 
           </div>
 
           {/* Filter Toggle Button (Right) */}
-          <div className={`flex-1 flex justify-end transition-opacity duration-300 ${isCountingDown ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          <div className={`flex-1 flex justify-end items-center gap-2 transition-opacity duration-300 ${isCountingDown ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+            {/* Grid Toggle */}
+            <button
+              onClick={() => setShowGrid(!showGrid)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md border border-white/20 transition-all ${showGrid ? 'bg-white text-black' : 'bg-black/30 text-white hover:bg-white/20'}`}
+              title="Toggle Grid"
+            >
+              <Grid className="w-5 h-5" />
+            </button>
+
             <button
               onClick={() => setShowFilterSelector(!showFilterSelector)}
               className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md border border-white/30 shadow-lg transition-all ${showFilterSelector ? 'bg-white text-blue-600' : 'bg-black/30 text-white hover:bg-white/20'}`}
@@ -263,7 +285,7 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose, layout }) 
                 title={filter.name}
               >
                 <img
-                  src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80"
+                  src="https://images.unsplash.com/photo-1600567494125-2d7fc89962ca?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                   alt={filter.name}
                   className="w-full h-full object-cover"
                   style={{ filter: filter.value }}
@@ -275,7 +297,7 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose, layout }) 
 
             <button
               onClick={() => setShowFilterModal(true)}
-              className="w-10 h-10 rounded-full bg-pink-500 text-white flex items-center justify-center shadow-lg hover:bg-pink-600 transition-colors"
+              className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 transition-colors"
             >
               <MoreHorizontal className="w-6 h-6" />
             </button>
@@ -300,7 +322,7 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, onClose, layout }) 
               >
                 <div className={`w-16 h-16 rounded-full overflow-hidden border-2 transition-all group-hover:scale-105 ${activeFilter.name === filter.name ? 'border-blue-500 ring-2 ring-blue-500/50' : 'border-transparent'}`}>
                   <img
-                    src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80"
+                    src="https://images.unsplash.com/photo-1600567494125-2d7fc89962ca?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                     alt={filter.name}
                     className="w-full h-full object-cover"
                     style={{ filter: filter.value }}
