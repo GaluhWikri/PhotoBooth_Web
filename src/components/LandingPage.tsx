@@ -111,7 +111,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onNavigate }) => {
                 </div>
 
                 <p className="text-stone-900 max-w-md mx-auto mb-12 text-sm md:text-base font-medium leading-relaxed">
-                    Capture the moment, cherish the magic,<br /> relive the love
+                    Keep the memory. Hold the magic.<br /> Remember the love.
                 </p>
 
                 <button
