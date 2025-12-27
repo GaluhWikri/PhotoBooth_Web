@@ -3,6 +3,8 @@ import { Image as ImageIcon, X, RefreshCw, ZoomIn, ZoomOut } from 'lucide-react'
 import Draggable from 'react-draggable';
 import { LayoutConfig } from './ChooseLayout';
 
+export type PhotoShape = 'rect' | 'rounded' | 'circle' | 'heart';
+
 // Tipe data untuk objek stiker
 export interface StickerObject {
   id: string;
@@ -32,13 +34,14 @@ interface PhotoStripProps {
   onUpdateSticker: (id: string, newProps: Partial<StickerObject>) => void;
   onDeleteSticker: (id: string) => void;
   readonly?: boolean;
+  photoShape?: PhotoShape;
 }
 
 export interface PhotoStripHandle {
   download: () => void;
 }
 
-const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layout, background, onDeletePhoto, stickers, onUpdateSticker, onDeleteSticker, readonly = false }, ref) => {
+const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layout, background, onDeletePhoto, stickers, onUpdateSticker, onDeleteSticker, readonly = false, photoShape = 'rect' }, ref) => {
   const stripRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
   const [activeStickerId, setActiveStickerId] = useState<string | null>(null);
@@ -139,9 +142,53 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
         // Clip area for photo
         ctx.save();
         ctx.beginPath();
-        ctx.rect(x, y, w, h);
-        ctx.closePath();
-        ctx.clip();
+
+        // Apply Shape Path
+        if (photoShape === 'circle') {
+          // Circle/Oval logic. Since it might not be perfect square, we do ellipse or circle.
+          // Usually circle fits in the smaller dimension or stretches. User likely wants Circle if square, Oval if rect.
+          // Let's do rounded rect with max radius for circle-ish or ellipse.
+          // Or just standard ellipse:
+          ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, 2 * Math.PI);
+          ctx.closePath();
+          ctx.clip();
+        } else if (photoShape === 'heart') {
+          // Heart shape using simple SVG path
+          const pathData = "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z";
+
+          const currentTransform = ctx.getTransform();
+          ctx.translate(x, y);
+          // Scale to fill the slot exactly (100% 100%), accounting for path padding (viewbox 2 3 20 18.35)
+          ctx.scale(w / 20, h / 18.35);
+          ctx.translate(-2, -3);
+          ctx.clip(new Path2D(pathData));
+          ctx.setTransform(currentTransform);
+        } else if (photoShape === 'rounded') {
+          // Rounded Rect
+          // Use 10% of min dimension as radius
+          const radius = Math.min(w, h) * 0.1;
+          if (typeof ctx.roundRect === 'function') {
+            ctx.roundRect(x, y, w, h, radius);
+          } else {
+            // Fallback for older browsers
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + w - radius, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+            ctx.lineTo(x + w, y + h - radius);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+            ctx.lineTo(x + radius, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+          }
+          ctx.closePath();
+          ctx.clip();
+        } else {
+          // Rect
+          ctx.rect(x, y, w, h);
+          ctx.closePath();
+          ctx.clip();
+        }
 
         // Apply filter if available
         if (photos[i] && photos[i].filter) {
@@ -176,10 +223,21 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
 
         ctx.restore();
 
-        // Border
+        ctx.restore();
+
+        // Border (Optional: Draw shape stroke if needed, primarily for debugging or style)
+        // Adjusting stroke for non-rect shapes is complex, omitting generalized stroke for now or keeping simple rect stroke only if rect
+        // For aesthetic purposes in 'photo booth' styles, usually no border on the cut itself, just the image.
+        // But if previously it had stroke, let's keep it but respect shape.
+
+        /* 
         ctx.strokeStyle = 'rgba(255,255,255,0.2)';
         ctx.lineWidth = 2 * (finalWidth / previewRect.width);
-        ctx.strokeRect(x, y, w, h);
+        // We would need to replay the path to stroke it.
+        // For now, removing the rect border to avoid square border on heart/circle shapes which looks bad.
+        */
+        ctx.lineWidth = 2 * (finalWidth / previewRect.width);
+        // ctx.strokeRect(x, y, w, h);
       }
 
       // 5. GAMBAR ULANG STIKER
@@ -282,7 +340,20 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
                       className="w-full h-full object-cover border-2 border-white/20 shadow-sm photo-image"
                       style={{
                         transform: photos[index].isMirrored !== false ? 'scaleX(-1)' : 'none',
-                        filter: photos[index].filter
+                        filter: photos[index].filter,
+                        borderRadius: photoShape === 'rounded' ? '1rem' : photoShape === 'circle' ? '50%' : '0',
+                        // Fix: Removed clipPath for heart because 'path()' is absolute coordinates (px) and doesn't scale.
+                        // Using maskImage alone works for responsive elements.
+                        clipPath: 'none',
+                        // Fix: Using tight-fit viewBox (2 3 20 18.35) to remove padding + preserveAspectRatio='none'
+                        maskImage: photoShape === 'heart' ? `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='2 3 20 18.35' fill='black' preserveAspectRatio='none'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/></svg>")` : 'none',
+                        WebkitMaskImage: photoShape === 'heart' ? `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='2 3 20 18.35' fill='black' preserveAspectRatio='none'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/></svg>")` : 'none',
+                        maskSize: '100% 100%',
+                        WebkitMaskSize: '100% 100%',
+                        maskPosition: 'center',
+                        WebkitMaskPosition: 'center',
+                        maskRepeat: 'no-repeat',
+                        WebkitMaskRepeat: 'no-repeat'
                       }} // Mirroring and Filter
                     />
                     {!readonly && (

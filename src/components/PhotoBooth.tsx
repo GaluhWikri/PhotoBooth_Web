@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Upload, Sticker, Download, X, ImageIcon, ArrowLeft } from 'lucide-react';
 import CameraComponent from './Camera';
-import PhotoStrip, { StickerObject, PhotoStripHandle } from './PhotoStrip';
+import PhotoStrip, { StickerObject, PhotoStripHandle, PhotoShape } from './PhotoStrip';
 import LandingPage from './LandingPage';
 import Navbar from './Navbar';
 import About from './About';
@@ -23,6 +23,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [showCamera, setShowCamera] = useState(false);
   const [background, setBackground] = useState<string>('#a59983ff');
+  const [photoShape, setPhotoShape] = useState<PhotoShape>('rect');
   const [activeStickers, setActiveStickers] = useState<StickerObject[]>([]);
   // State untuk menyimpan stiker dan paper dari Supabase
   const [fetchedStickers, setFetchedStickers] = useState<{ name: string, url: string }[]>([]);
@@ -182,6 +183,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
                   stickers={activeStickers}
                   onUpdateSticker={updateSticker}
                   onDeleteSticker={deleteSticker}
+                  photoShape={photoShape}
                 />
               </div>
               <div className="mt-8 flex gap-4 w-full justify-center">
@@ -249,6 +251,40 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
             )}
 
             <div className="space-y-8">
+              {/* Photo Shapes */}
+              <div>
+                <h3 className="text-lg font-medium text-stone-700 mb-4">Photo Shape:</h3>
+                <div className="flex flex-wrap gap-4">
+                  {[
+                    { id: 'rect', label: 'Square', iconClass: 'rounded-none' },
+                    { id: 'rounded', label: 'Rounded', iconClass: 'rounded-lg' },
+                    { id: 'circle', label: 'Circle', iconClass: 'rounded-full' },
+                    { id: 'heart', label: 'Love', icon: '♥' }
+                  ].map((shape) => (
+                    <button
+                      key={shape.id}
+                      onClick={() => setPhotoShape(shape.id as PhotoShape)}
+                      className={`
+                        w-16 h-16 flex items-center justify-center border-2 transition-all rounded-xl
+                        ${photoShape === shape.id
+                          ? 'border-blue-500 bg-blue-50 text-blue-600 shadow-md ring-2 ring-blue-200'
+                          : 'border-stone-200 bg-white text-stone-400 hover:border-stone-300 hover:bg-stone-50'
+                        }
+                      `}
+                      title={shape.label}
+                    >
+                      {shape.id === 'heart' ? (
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        </svg>
+                      ) : (
+                        <div className={`w-8 h-8 bg-current opacity-20 ${shape.iconClass}`}></div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Templates */}
               <div>
                 <h3 className="text-lg font-medium text-stone-700 mb-4">Templates & Colors:</h3>
