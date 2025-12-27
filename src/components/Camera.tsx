@@ -4,7 +4,7 @@ import { X, MoreHorizontal, Sparkles, Grid } from 'lucide-react';
 import { LayoutConfig } from './ChooseLayout';
 
 interface CameraProps {
-  onCapture: (photoDataUrl: string) => void;
+  onCapture: (photoDataUrl: string, filter: string) => void;
 
   layout: LayoutConfig;
 }
@@ -145,8 +145,8 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, layout }) => {
     canvas.width = renderWidth;
     canvas.height = renderHeight;
 
-    // Apply filter
-    ctx.filter = activeFilter.value;
+    // Apply filter - REMOVED: We now pass the filter string to be applied via CSS
+    // ctx.filter = activeFilter.value;
 
     setIsFlashing(true);
 
@@ -160,20 +160,27 @@ const CameraComponent: React.FC<CameraProps> = ({ onCapture, layout }) => {
     const photoDataUrl = canvas.toDataURL('image/jpeg', 0.9);
 
     setTimeout(() => setIsFlashing(false), 200);
-    onCapture(photoDataUrl);
+    onCapture(photoDataUrl, activeFilter.value);
   };
 
   // Determine container aspect ratio based on layout
   const getContainerStyle = () => {
-    // Base width - effectively the "max" width for standard layouts, others are constrained further
-    const baseStyle = { width: '100%', minWidth: '320px' };
+    // Base style with constrained dimensions
+    const baseStyle = { width: '100%' };
 
     switch (layout.type) {
-      case 'strip-4': return { ...baseStyle, aspectRatio: '4/3' };
-      case 'grid-6': return { ...baseStyle, aspectRatio: '1/1', maxWidth: '500px' };
-      case 'strip-2': return { ...baseStyle, aspectRatio: '2/3', maxWidth: '420px' };
-      case 'grid-4': return { ...baseStyle, aspectRatio: '2/3', maxWidth: '420px' };
-      default: return { ...baseStyle, aspectRatio: '3/2' };
+      // Landscape orientations
+      case 'strip-4': return { ...baseStyle, aspectRatio: '4/3', maxWidth: '480px' };
+
+      // Square
+      case 'grid-6': return { ...baseStyle, aspectRatio: '1/1', maxWidth: '450px' };
+
+      // Portrait orientations (taller) - constrain width more to keep height reasonable
+      case 'strip-2': return { ...baseStyle, aspectRatio: '2/3', maxWidth: '360px' };
+      case 'grid-4': return { ...baseStyle, aspectRatio: '2/3', maxWidth: '360px' };
+
+      // Default (Standard Landscape)
+      default: return { ...baseStyle, aspectRatio: '3/2', maxWidth: '480px' };
     }
   };
 

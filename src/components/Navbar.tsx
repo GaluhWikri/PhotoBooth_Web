@@ -19,6 +19,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, activePage }) => {
         { id: 'about', label: 'About' },
         { id: 'privacy', label: 'Privacy Policy' },
         { id: 'contact', label: 'Contact' },
+        { id: 'support', label: 'Support' },
     ];
 
     return (
@@ -44,7 +45,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, activePage }) => {
                     ))}
                     <button
                         onClick={() => handleNavigation('layout-selection')}
-                        className="hover:text-stone-900 transition-colors"
+                        className={`hover:text-stone-900 transition-colors ${activePage === 'layout-selection' ? 'text-blue-600 font-bold' : ''}`}
                     >
                         choose layout
                     </button>
@@ -83,7 +84,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, activePage }) => {
                         ))}
                         <button
                             onClick={() => handleNavigation('layout-selection')}
-                            className="p-4 rounded-2xl text-left font-medium hover:bg-stone-50 text-stone-600 transition-all border-t border-stone-100 mt-2"
+                            className={`p-4 rounded-2xl text-left font-medium transition-all border-t border-stone-100 mt-2 ${activePage === 'layout-selection' ? 'bg-blue-50 text-blue-600 shadow-sm' : 'hover:bg-stone-50 text-stone-600'}`}
                         >
                             Choose Layout
                         </button>

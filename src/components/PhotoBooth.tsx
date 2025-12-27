@@ -7,6 +7,7 @@ import Navbar from './Navbar';
 import About from './About';
 import PrivacyPolicy from './PrivacyPolicy';
 import Contact from './Contact';
+import Support from './Support';
 import ChooseLayout, { LayoutConfig } from './ChooseLayout';
 import { supabase } from '../lib/supabaseClient';
 
@@ -14,6 +15,8 @@ interface Photo {
   id: string;
   dataUrl: string;
   timestamp: number;
+  filter: string;
+  isMirrored?: boolean;
 }
 
 const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: LayoutConfig }> = ({ onNavigate, layout }) => {
@@ -68,9 +71,15 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
     { name: 'BLOOD orangge', value: '#EF6F4C' },
   ];
 
-  const handlePhotoCapture = (photoDataUrl: string) => {
+  const handlePhotoCapture = (photoDataUrl: string, filter: string, isMirrored: boolean = true) => {
     if (photos.length < layout.photoCount) {
-      const newPhoto = { id: Date.now().toString(), dataUrl: photoDataUrl, timestamp: Date.now() };
+      const newPhoto = {
+        id: Date.now().toString(),
+        dataUrl: photoDataUrl,
+        timestamp: Date.now(),
+        filter,
+        isMirrored
+      };
       setPhotos(prev => [...prev, newPhoto]);
     }
     if (photos.length === layout.photoCount - 1) setShowCamera(false);
@@ -112,7 +121,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
       const reader = new FileReader();
       reader.onload = (e) => {
         if (typeof e.target?.result === 'string') {
-          handlePhotoCapture(e.target.result);
+          handlePhotoCapture(e.target.result, 'none', false);
         }
       };
       reader.readAsDataURL(file);
@@ -163,7 +172,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
           {/* Left Column: Preview */}
           <div className="lg:col-span-5 order-1 lg:order-1">
             <div className="sticky top-24 flex flex-col items-center">
-              <div className={`relative transform transition-all duration-300 hover:scale-[1.02] shadow-2xl rounded-sm overflow-hidden border-[6px] border-white ${layout.type.startsWith('grid') ? 'w-[320px]' : 'w-[220px]'}`}>
+              <div className={`relative transform transition-all duration-300 hover:scale-[1.02] shadow-2xl rounded-sm overflow-hidden border-[6px] border-white ${layout.type.startsWith('grid') ? 'w-[300px] lg:w-[320px]' : 'w-[160px] lg:w-[200px]'}`}>
                 <PhotoStrip
                   ref={stripRef}
                   photos={photos}
@@ -312,6 +321,7 @@ const PhotoBooth: React.FC = () => {
       {currentPage === 'about' && <About onNavigate={navigate} />}
       {currentPage === 'privacy' && <PrivacyPolicy onNavigate={navigate} />}
       {currentPage === 'contact' && <Contact onNavigate={navigate} />}
+      {currentPage === 'support' && <Support onNavigate={navigate} />}
     </>
   );
 };

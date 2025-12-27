@@ -118,7 +118,7 @@ const ChooseLayout: React.FC<ChooseLayoutProps> = ({ onSelect, onNavigate }) => 
 
     return (
         <div className="min-h-screen bg-[#F0F7FF] flex flex-col">
-            <Navbar onNavigate={onNavigate} />
+            <Navbar onNavigate={onNavigate} activePage="layout-selection" />
 
             <div className="flex-grow flex flex-col items-center justify-center p-8">
                 <div className="text-center mb-12">

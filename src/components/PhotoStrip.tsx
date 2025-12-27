@@ -18,6 +18,8 @@ interface Photo {
   id: string;
   dataUrl: string;
   timestamp: number;
+  filter: string;
+  isMirrored?: boolean;
 }
 
 // Properti yang diterima oleh komponen ini
@@ -116,7 +118,8 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
       // Since we are using Grid/Flex in CSS, getting exact positions from DOM is safest
       // We map the preview element positions to the canvas coordinate system
 
-      for (const imgEl of imageElements) {
+      for (let i = 0; i < imageElements.length; i++) {
+        const imgEl = imageElements[i];
         const imgRect = imgEl.getBoundingClientRect();
 
         // Hitung posisi dan ukuran relatif dari pratinjau, lalu skalakan
@@ -140,12 +143,21 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
         ctx.closePath();
         ctx.clip();
 
+        // Apply filter if available
+        if (photos[i] && photos[i].filter) {
+          ctx.filter = photos[i].filter;
+        }
+
         // Meniru efek 'object-fit: cover' dan 'transform: scaleX(-1)'
         // IMPORTANT: The context flip must happen around the image center or handled carefully
         // Standard approach: Translate to center of slot, scale -1 1, draw image centered
 
-        ctx.translate(x + w / 2, y + h / 2);
-        ctx.scale(-1, 1);
+        if (photos[i] && photos[i].isMirrored !== false) {
+          ctx.translate(x + w / 2, y + h / 2);
+          ctx.scale(-1, 1);
+        } else {
+          ctx.translate(x + w / 2, y + h / 2);
+        }
 
         const imgAspectRatio = photoImg.width / photoImg.height;
         const slotAspectRatio = w / h;
@@ -268,7 +280,10 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
                       src={photos[index].dataUrl}
                       alt={`Photo ${index + 1}`}
                       className="w-full h-full object-cover border-2 border-white/20 shadow-sm photo-image"
-                      style={{ transform: 'scaleX(-1)' }} // Mirroring
+                      style={{
+                        transform: photos[index].isMirrored !== false ? 'scaleX(-1)' : 'none',
+                        filter: photos[index].filter
+                      }} // Mirroring and Filter
                     />
                     {!readonly && (
                       <button onClick={() => onDeletePhoto(photos[index].id)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 hover:bg-red-500 transition-colors z-10"><X className="w-3 h-3" /></button>
