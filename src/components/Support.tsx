@@ -9,10 +9,10 @@ interface SupportProps {
 const Support: React.FC<SupportProps> = ({ onNavigate }) => {
     const [copied, setCopied] = useState(false);
 
-    const accountNumber = "";
+    const accountNumber = "-";
     const accountName = "Galuh Wikri Ramadhan";
     const bankName = "Bank Negara Indonesia (BNI)";
-    const bankLogoUrl = "https://image.cermati.com/c_fit,h_240,w_360/j4raialhhlftqq5c1uz0.webpdd";
+    const bankLogoUrl = "https://image.cermati.com/c_fit,h_240,w_360/j4raialhhlftqq5c1uz0.web";
 
     const handleCopy = async () => {
         try {
