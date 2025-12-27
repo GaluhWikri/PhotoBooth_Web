@@ -23,6 +23,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [showCamera, setShowCamera] = useState(false);
   const [background, setBackground] = useState<string>('#a59983ff');
+  const [textColor, setTextColor] = useState<string>('#ffffff'); // Default white
   const [photoShape, setPhotoShape] = useState<PhotoShape>('rect');
   const [activeStickers, setActiveStickers] = useState<StickerObject[]>([]);
   // State untuk menyimpan stiker dan paper dari Supabase
@@ -184,6 +185,7 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
                   onUpdateSticker={updateSticker}
                   onDeleteSticker={deleteSticker}
                   photoShape={photoShape}
+                  textColor={textColor}
                 />
               </div>
               <div className="mt-8 flex gap-4 w-full justify-center">
@@ -250,88 +252,126 @@ const BoothContent: React.FC<{ onNavigate: (page: string) => void, layout: Layou
               </div>
             )}
 
-            <div className="space-y-8">
-              {/* Photo Shapes */}
+            {/* Templates & Colors */}
+            <div className="space-y-6">
+
+              {/* Text Color Picker */}
               <div>
-                <h3 className="text-lg font-medium text-stone-700 mb-4">Photo Shape:</h3>
-                <div className="flex flex-wrap gap-4">
+                <h3 className="text-lg font-medium text-stone-700 mb-4">Text Color:</h3>
+                <div className="flex gap-4 overflow-x-visible p-2 flex-wrap">
                   {[
-                    { id: 'rect', label: 'Square', iconClass: 'rounded-none' },
-                    { id: 'rounded', label: 'Rounded', iconClass: 'rounded-lg' },
-                    { id: 'circle', label: 'Circle', iconClass: 'rounded-full' },
-                    { id: 'heart', label: 'Love', icon: '♥' }
-                  ].map((shape) => (
+                    '#ffffff', '#000000', '#1E3E62', '#EF6F4C',
+                    '#AFAB23', '#876029', '#2B2B23', '#FFD700'
+                  ].map((color) => (
                     <button
-                      key={shape.id}
-                      onClick={() => setPhotoShape(shape.id as PhotoShape)}
-                      className={`
-                        w-16 h-16 flex items-center justify-center border-2 transition-all rounded-xl
-                        ${photoShape === shape.id
-                          ? 'border-blue-500 bg-blue-50 text-blue-600 shadow-md ring-2 ring-blue-200'
-                          : 'border-stone-200 bg-white text-stone-400 hover:border-stone-300 hover:bg-stone-50'
-                        }
+                      key={color}
+                      onClick={() => setTextColor(color)}
+                      className={`w-10 h-10 rounded-full shadow-sm border border-stone-200 transition-all hover:scale-110 flex items-center justify-center
+                        ${textColor === color ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : ''}
                       `}
-                      title={shape.label}
+                      style={{ backgroundColor: color }}
+                      title={color}
                     >
-                      {shape.id === 'heart' ? (
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                        </svg>
-                      ) : (
-                        <div className={`w-8 h-8 bg-current opacity-20 ${shape.iconClass}`}></div>
+                      {textColor === color && (
+                        <span className={`block w-2 h-2 rounded-full ${['#ffffff', '#FFD700'].includes(color) ? 'bg-black/20' : 'bg-white/40'}`}></span>
                       )}
                     </button>
                   ))}
+                  <div className="w-10 h-10 rounded-full shadow-sm border border-stone-200 bg-white hover:bg-stone-50 transition-colors relative cursor-pointer flex items-center justify-center group">
+                    <input
+                      type="color"
+                      value={textColor}
+                      onChange={(e) => setTextColor(e.target.value)}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                    <span className="text-xl font-light text-stone-400 group-hover:text-blue-500 transition-colors">+</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Templates */}
-              <div>
-                <h3 className="text-lg font-medium text-stone-700 mb-4">Templates & Colors:</h3>
-                <div className="grid grid-cols-6 sm:grid-cols-8 gap-3">
-                  <label className="w-full aspect-square rounded-full border-2 border-dashed border-stone-300 flex items-center justify-center text-stone-400 hover:text-blue-500 hover:border-blue-500 cursor-pointer transition-colors bg-white">
-                    <Upload className="w-5 h-5" />
-                    <input type="file" className="hidden" accept="image/*" onChange={handleBackgroundImage} />
-                  </label>
-                  {colors.map((color) => (
-                    <button
-                      key={color.value}
-                      onClick={() => setBackground(color.value)}
-                      className={`w-full aspect-square rounded-full shadow-sm transition-transform hover:scale-110 ${background === color.value ? 'ring-2 ring-offset-2 ring-stone-800 scale-110' : ''}`}
-                      style={{ backgroundColor: color.value }}
-                      title={color.name}
-                    />
-                  ))}
-                  {fetchedPapers.map((paper) => (
-                    <button
-                      key={paper.url}
-                      onClick={() => setBackground(paper.url)}
-                      className={`w-full aspect-square rounded-full shadow-sm transition-transform hover:scale-110 bg-cover bg-center ${background === paper.url ? 'ring-2 ring-offset-2 ring-stone-800 scale-110' : ''}`}
-                      style={{ backgroundImage: `url(${paper.url})` }}
-                      title={paper.name}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Stickers (Supabase) */}
-              <div className="bg-white/50 rounded-3xl p-6 border border-white/60">
-                <h3 className="text-lg font-medium text-stone-700 mb-4 flex items-center gap-2">
-                  <Sticker className="w-5 h-5" /> Add Stickers
-                </h3>
-                <div className="grid grid-cols-6 sm:grid-cols-8 gap-3 max-h-60 overflow-y-auto custom-scrollbar p-1">
-                  {fetchedStickers.length === 0 ? (
-                    <p className="col-span-full text-center text-stone-400 text-sm">Loading stickers...</p>
-                  ) : (
-                    fetchedStickers.map(sticker => (
-                      <button key={sticker.name} onClick={() => addSticker(sticker.url)} className="bg-white p-2 rounded-xl shadow-sm border border-stone-100 hover:border-blue-300 hover:shadow-md transition-all hover:-translate-y-1">
-                        <img src={sticker.url} alt={sticker.name} className="w-full h-full object-contain pointer-events-none" />
+              <div className="space-y-8">
+                {/* Photo Shapes */}
+                <div>
+                  <h3 className="text-lg font-medium text-stone-700 mb-4">Photo Shape:</h3>
+                  <div className="flex flex-wrap gap-4">
+                    {[
+                      { id: 'rect', label: 'Square', iconClass: 'rounded-none' },
+                      { id: 'rounded', label: 'Rounded', iconClass: 'rounded-lg' },
+                      { id: 'circle', label: 'Circle', iconClass: 'rounded-full' },
+                      { id: 'heart', label: 'Love', icon: '♥' }
+                    ].map((shape) => (
+                      <button
+                        key={shape.id}
+                        onClick={() => setPhotoShape(shape.id as PhotoShape)}
+                        className={`
+                        w-16 h-16 flex items-center justify-center border-2 transition-all rounded-xl
+                        ${photoShape === shape.id
+                            ? 'border-blue-500 bg-blue-50 text-blue-600 shadow-md ring-2 ring-blue-200'
+                            : 'border-stone-200 bg-white text-stone-400 hover:border-stone-300 hover:bg-stone-50'
+                          }
+                      `}
+                        title={shape.label}
+                      >
+                        {shape.id === 'heart' ? (
+                          <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 opacity-20">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                          </svg>
+                        ) : (
+                          <div className={`w-8 h-8 bg-current opacity-20 ${shape.iconClass}`}></div>
+                        )}
                       </button>
-                    ))
-                  )}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
+                {/* Templates */}
+                <div>
+                  <h3 className="text-lg font-medium text-stone-700 mb-4">Templates & Colors:</h3>
+                  <div className="grid grid-cols-6 sm:grid-cols-8 gap-3">
+                    <label className="w-full aspect-square rounded-full border-2 border-dashed border-stone-300 flex items-center justify-center text-stone-400 hover:text-blue-500 hover:border-blue-500 cursor-pointer transition-colors bg-white">
+                      <Upload className="w-5 h-5" />
+                      <input type="file" className="hidden" accept="image/*" onChange={handleBackgroundImage} />
+                    </label>
+                    {colors.map((color) => (
+                      <button
+                        key={color.value}
+                        onClick={() => setBackground(color.value)}
+                        className={`w-full aspect-square rounded-full shadow-sm transition-transform hover:scale-110 ${background === color.value ? 'ring-2 ring-offset-2 ring-stone-800 scale-110' : ''}`}
+                        style={{ backgroundColor: color.value }}
+                        title={color.name}
+                      />
+                    ))}
+                    {fetchedPapers.map((paper) => (
+                      <button
+                        key={paper.url}
+                        onClick={() => setBackground(paper.url)}
+                        className={`w-full aspect-square rounded-full shadow-sm transition-transform hover:scale-110 bg-cover bg-center ${background === paper.url ? 'ring-2 ring-offset-2 ring-stone-800 scale-110' : ''}`}
+                        style={{ backgroundImage: `url(${paper.url})` }}
+                        title={paper.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Stickers (Supabase) */}
+                <div className="bg-white/50 rounded-3xl p-6 border border-white/60">
+                  <h3 className="text-lg font-medium text-stone-700 mb-4 flex items-center gap-2">
+                    <Sticker className="w-5 h-5" /> Add Stickers
+                  </h3>
+                  <div className="grid grid-cols-6 sm:grid-cols-8 gap-3 max-h-60 overflow-y-auto custom-scrollbar p-1">
+                    {fetchedStickers.length === 0 ? (
+                      <p className="col-span-full text-center text-stone-400 text-sm">Loading stickers...</p>
+                    ) : (
+                      fetchedStickers.map(sticker => (
+                        <button key={sticker.name} onClick={() => addSticker(sticker.url)} className="bg-white p-2 rounded-xl shadow-sm border border-stone-100 hover:border-blue-300 hover:shadow-md transition-all hover:-translate-y-1">
+                          <img src={sticker.url} alt={sticker.name} className="w-full h-full object-contain pointer-events-none" />
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         </div>

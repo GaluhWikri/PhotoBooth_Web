@@ -35,13 +35,14 @@ interface PhotoStripProps {
   onDeleteSticker: (id: string) => void;
   readonly?: boolean;
   photoShape?: PhotoShape;
+  textColor?: string;
 }
 
 export interface PhotoStripHandle {
   download: () => void;
 }
 
-const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layout, background, onDeletePhoto, stickers, onUpdateSticker, onDeleteSticker, readonly = false, photoShape = 'rect' }, ref) => {
+const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layout, background, onDeletePhoto, stickers, onUpdateSticker, onDeleteSticker, readonly = false, photoShape = 'rect', textColor = '#ffffff' }, ref) => {
   const stripRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
   const [activeStickerId, setActiveStickerId] = useState<string | null>(null);
@@ -266,7 +267,7 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
       const tx = (textRect.left - previewRect.left + textRect.width / 2) / previewRect.width * finalWidth;
       const ty = (textRect.top - previewRect.top + textRect.height / 2) / previewRect.height * finalHeight;
 
-      ctx.fillStyle = textStyle.color;
+      ctx.fillStyle = textColor; // Use the prop directly for reliability
       // Include fontStyle (italic)
       // Scale font size based on width ratio
       const fontSize = parseFloat(textStyle.fontSize) * (finalWidth / previewRect.width);
@@ -372,8 +373,11 @@ const PhotoStrip = forwardRef<PhotoStripHandle, PhotoStripProps>(({ photos, layo
           {/* Footer Text */}
           <div className="text-center pb-4">
             <p ref={textRef}
-              className={`font-serif italic text-white/90 tracking-wider ${layout.type.includes('strip') ? 'text-sm' : 'text-xl'}`}
-              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+              className={`font-serif italic tracking-wider ${layout.type.includes('strip') ? 'text-sm' : 'text-xl'}`}
+              style={{
+                color: textColor,
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+              }}>
               G.STUDIO
             </p>
           </div>
